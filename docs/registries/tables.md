@@ -65,17 +65,15 @@ One row per detected PII/PHI entity within a scan job.
 
 ## `evidence`
 
-⚠ **Shape unresolved.** The plan references an `Evidence` model alongside `ScanJob` and `Finding`, but the relationship is not yet defined: embedded in `findings.text_snippet`, a separate table with a FK, or a JSON blob column?
+**Resolution (Task #2):** Collapsed into `findings.text_snippet`. No separate table. Safe evidence snippets are stored as a TEXT column on the `findings` table — redacted by default, never the raw sensitive value.
 
-**Proposed resolution:** At implementation time, decide whether `evidence` is a separate table (1:1 with `findings`, stores raw text for internal use only) or collapsed into the `findings.text_snippet` column. Update this registry entry before writing `storage/models.py`.
+**Schema / shape:** See `findings.text_snippet` column.
 
-**Schema / shape:** TBD
+**Producers:** `src/scanmenow/storage/repository.py` — `save_finding()` writes `text_snippet`
 
-**Producers:** TBD
+**Consumers:** `src/scanmenow/storage/repository.py` — `export_csv()` includes `text_snippet` in CSV output
 
-**Consumers:** TBD
-
-**Status:** ⚠ shape unresolved — must resolve before implementing `storage/models.py`
+**Status:** ✓ resolved — collapsed into findings.text_snippet
 
 ---
 
@@ -85,7 +83,7 @@ One row per detected PII/PHI entity within a scan job.
 |-------|-----------|-----------|--------|
 | `scan_jobs` | db.py, repository.py | repository.py, test_storage.py | ⚠ planned |
 | `findings` | db.py, repository.py | repository.py, test_storage.py | ⚠ planned |
-| `evidence` | TBD | TBD | ⚠ shape unresolved |
+| `evidence` | repository.py (via text_snippet) | repository.py | ✓ collapsed into findings.text_snippet |
 
 ---
 
