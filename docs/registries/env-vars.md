@@ -20,9 +20,9 @@ Path to the SQLite `.db` file where scan jobs and findings are persisted.
 **Consumers (who reads it)**
 - `src/scanmenow/storage/db.py` — `init_db()` reads this to determine the DB file location
 
-**Adjacent constraint — Missing default:** If this variable is absent and no fallback is coded, `init_db()` will raise `TypeError` or create the file in the current working directory unexpectedly. **Must implement a default in `db.py` before shipping.**
+**Adjacent constraint — Default implemented:** `db.py` defines `DEFAULT_DB_PATH = Path.home() / ".scanmenow" / "scanmenow.db"`. `get_db_path()` returns this when `SCANMENOW_DB_PATH` is absent. Parent directory is created automatically on first connection.
 
-**Status:** ⚠ planned — default value not yet implemented in code
+**Status:** ✓ implemented
 
 ---
 
@@ -50,25 +50,28 @@ Controls logging verbosity for the Python backend.
 
 | Variable | Required | Default | Consumers | Status |
 |----------|----------|---------|-----------|--------|
-| `SCANMENOW_DB_PATH` | no | `~/.scanmenow/scanmenow.db` | storage/db.py | ⚠ planned, default unimplemented |
-| `SCANMENOW_LOG_LEVEL` | no | `INFO` | cli.py or __init__.py | ⚠ planned |
+| `SCANMENOW_DB_PATH` | no | `~/.scanmenow/scanmenow.db` | storage/db.py | ✓ implemented |
+| `SCANMENOW_LOG_LEVEL` | no | `INFO` | cli.py or __init__.py | ⚠ planned — not yet consumed |
 
 ---
 
 ## Audit Trail — Proof of Registry Verification
 
-**Last audit:** 2026-05-23T00:00:00Z (by /cross-boundary-audit)
+**Last audit:** 2026-05-23T00:00:00Z (updated by /finish-build — post-code verification)
 
-**Boundaries checked:** Environment variables (pre-code, plan-based audit)
+**Boundaries checked:** Environment variables (post-code verification against shipped implementation)
 
 **Evidence recorded:**
-- 0 entries with complete producer/consumer pairs ✓ (no code yet)
-- 2 entries planned ⚠ (pre-code)
+- 1 entry fully implemented ✓ (`SCANMENOW_DB_PATH`)
+- 1 entry planned ⚠ (`SCANMENOW_LOG_LEVEL` — not yet consumed in code, deferred to future task)
 - 0 shape mismatches
 - New identifiers introduced on task #2: `SCANMENOW_DB_PATH`, `SCANMENOW_LOG_LEVEL`
-- Registries match current code diff: N/A — pre-code audit
+- Registries match current code diff: ✓ verified
 
-**Gaps identified:**
-- `SCANMENOW_DB_PATH` has no default value implemented — `db.py` must handle missing var gracefully
+**Gaps resolved:**
+- `SCANMENOW_DB_PATH` default implemented via `DEFAULT_DB_PATH` constant in `db.py`
 
-**Status:** Audit complete (pre-code)
+**Soft flags:**
+- `SCANMENOW_LOG_LEVEL` is documented but not yet wired into logging config — carry forward to a future task
+
+**Status:** ✓ Audit complete (post-code)

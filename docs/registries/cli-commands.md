@@ -26,7 +26,7 @@ The root Typer app. Provides `--help` and version info. Parent for all subcomman
 - `tests/test_cli.py` — `uv run scanmenow --help` smoke test (Proof Unit 1)
 - Future: Electron subprocess bridge calls `scanmenow <subcommand>`
 
-**Status:** ⚠ planned — no code yet
+**Status:** ✓ implemented — `pyproject.toml` declares the entry point; `cli.py` implements the root `app` with `--version` (`-v`) and `--help`. `no_args_is_help=True` set.
 
 ---
 
@@ -46,23 +46,22 @@ The following subcommands are documented here as placeholders to prevent naming 
 
 | Command | Declared | Implemented | Status |
 |---------|----------|-------------|--------|
-| `scanmenow` (root) | pyproject.toml | cli.py | ⚠ planned |
+| `scanmenow` (root) | pyproject.toml | cli.py | ✓ implemented |
 
 ---
 
 ## Audit Trail — Proof of Registry Verification
 
-**Last audit:** 2026-05-23T00:00:00Z (by /cross-boundary-audit)
+**Last audit:** 2026-05-23T00:00:00Z (updated by /finish-build — post-code verification)
 
-**Boundaries checked:** CLI entry points (pre-code, plan-based audit)
+**Boundaries checked:** CLI entry points (post-code verification against shipped implementation)
 
 **Evidence recorded:**
-- 0 entries with complete producer/consumer pairs ✓ (no code yet)
-- 1 entry planned ⚠ (pre-code)
+- 1 entry with complete producer/consumer pairs ✓ (code shipped and smoke-tested)
 - 0 shape mismatches
 - New identifiers introduced on task #2: `scanmenow` entry point
-- Registries match current code diff: N/A — pre-code audit
+- Registries match current code diff: ✓ verified (Proof Unit 1 passes — exit 0, help text present)
 
-**Gaps identified:** none beyond pre-code state
+**Gaps identified:** none
 
-**Status:** Audit complete (pre-code)
+**Status:** ✓ Audit complete (post-code)

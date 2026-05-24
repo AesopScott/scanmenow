@@ -27,9 +27,9 @@ A single scan run — tracks job identity, status, and timing.
 - `src/scanmenow/storage/repository.py` — `get_findings_for_job()` joins on `job_id`
 - `tests/test_storage.py` — smoke test creates and queries a job
 
-**Adjacent constraint — Foreign key:** `findings.job_id` references `scan_jobs.job_id`. SQLite foreign key enforcement requires `PRAGMA foreign_keys = ON` at connection time.
+**Adjacent constraint — Foreign key:** `findings.job_id` references `scan_jobs.job_id`. `PRAGMA foreign_keys = ON` is enforced in `get_connection()` at every connection open.
 
-**Status:** ⚠ planned — no code yet
+**Status:** ✓ implemented
 
 ---
 
@@ -57,9 +57,9 @@ One row per detected PII/PHI entity within a scan job.
 - `src/scanmenow/storage/repository.py` — `get_findings_for_job()`, `export_csv()`
 - `tests/test_storage.py` — smoke test saves and queries findings
 
-**Adjacent constraint — CSV export:** `export_csv()` must use headers in this exact order: `job_id, entity_type, start, end, score, text_snippet` (per Proof Unit 5). Column order change = breaking change for analyst consumers.
+**Adjacent constraint — CSV export:** `export_csv()` must use headers in this exact order: `job_id, entity_type, start, end, score, text_snippet` (per Proof Unit 5). Column order change = breaking change for analyst consumers. `CSV_HEADERS` constant in `repository.py` enforces this order.
 
-**Status:** ⚠ planned — no code yet
+**Status:** ✓ implemented
 
 ---
 
@@ -81,27 +81,29 @@ One row per detected PII/PHI entity within a scan job.
 
 | Table | Producers | Consumers | Status |
 |-------|-----------|-----------|--------|
-| `scan_jobs` | db.py, repository.py | repository.py, test_storage.py | ⚠ planned |
-| `findings` | db.py, repository.py | repository.py, test_storage.py | ⚠ planned |
+| `scan_jobs` | db.py, repository.py | repository.py, test_storage.py | ✓ implemented |
+| `findings` | db.py, repository.py | repository.py, test_storage.py | ✓ implemented |
 | `evidence` | repository.py (via text_snippet) | repository.py | ✓ collapsed into findings.text_snippet |
 
 ---
 
 ## Audit Trail — Proof of Registry Verification
 
-**Last audit:** 2026-05-23T00:00:00Z (by /cross-boundary-audit)
+**Last audit:** 2026-05-23T00:00:00Z (updated by /finish-build — post-code verification)
 
-**Boundaries checked:** SQLite tables (pre-code, plan-based audit)
+**Boundaries checked:** SQLite tables (post-code verification against shipped implementation)
 
 **Evidence recorded:**
-- 0 entries with complete producer/consumer pairs ✓ (no code yet)
-- 2 entries with planned producers/consumers ⚠ (pre-code)
-- 1 entry with unresolved shape ⚠ (evidence table)
-- New identifiers introduced on task #2: `scan_jobs`, `findings`, `evidence`
-- Registries match current code diff: N/A — pre-code audit
+- 2 entries with complete producer/consumer pairs ✓ (code shipped)
+- 1 entry resolved ✓ (`evidence` collapsed into `findings.text_snippet`)
+- New identifiers introduced on task #2: `scan_jobs`, `findings`
+- Registries match current code diff: ✓ verified
 
-**Gaps identified:**
-- `evidence` table shape is unresolved — relationship to `findings` must be decided before implementation
-- Foreign key enforcement requires `PRAGMA foreign_keys = ON` at every connection
+**Gaps resolved:**
+- `evidence` table shape resolved — collapsed into `findings.text_snippet` column
+- `PRAGMA foreign_keys = ON` implemented in `get_connection()` (db.py:30)
 
-**Status:** Audit complete (pre-code)
+**Soft flags:**
+- `source_file` column in `findings` not listed in CSV_HEADERS (intentional — analyst export only needs the 6 listed fields; source_file visible via direct DB query)
+
+**Status:** ✓ Audit complete (post-code)
