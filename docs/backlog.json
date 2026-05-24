@@ -29,7 +29,7 @@
                       "description":  "Python project initialization with uv, Typer CLI scaffold, basic smoke tests, and project structure (22 subtasks)",
                       "category":  "feature",
                       "priority":  100,
-                      "status":  "build-finished",
+                      "status":  "cba-complete",
                       "impact":  "standard",
                       "phase":  null,
                       "phase_task":  null,
