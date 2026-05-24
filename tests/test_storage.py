@@ -8,27 +8,25 @@ from scanmenow.storage.repository import create_job, save_finding, get_findings_
 
 def test_create_and_query_job(tmp_db_path):
     """ScanJob round-trips through create_job → get_findings_for_job."""
-    db = Path(tmp_db_path)
     job = ScanJob(source_path="/data/scans")
-    saved = create_job(job, db_path=db)
+    saved = create_job(job, db_path=tmp_db_path)
     assert saved.job_id == job.job_id
     # No findings yet — query returns empty list
-    findings = get_findings_for_job(job.job_id, db_path=db)
+    findings = get_findings_for_job(job.job_id, db_path=tmp_db_path)
     assert findings == []
 
 
 def test_save_and_retrieve_findings(tmp_db_path):
     """Two Findings saved under a job are retrieved in offset order."""
-    db = Path(tmp_db_path)
     job = ScanJob(source_path="/data/scans")
-    create_job(job, db_path=db)
+    create_job(job, db_path=tmp_db_path)
 
     f1 = Finding(job_id=job.job_id, entity_type="EMAIL_ADDRESS", start=15, end=35, score=0.9, text_snippet="<redacted>")
     f2 = Finding(job_id=job.job_id, entity_type="PERSON", start=5, end=14, score=0.85, text_snippet="<redacted>")
-    save_finding(f1, db_path=db)
-    save_finding(f2, db_path=db)
+    save_finding(f1, db_path=tmp_db_path)
+    save_finding(f2, db_path=tmp_db_path)
 
-    results = get_findings_for_job(job.job_id, db_path=db)
+    results = get_findings_for_job(job.job_id, db_path=tmp_db_path)
     assert len(results) == 2
     # Ordered by start offset
     assert results[0].entity_type == "PERSON"
@@ -37,17 +35,16 @@ def test_save_and_retrieve_findings(tmp_db_path):
 
 def test_export_csv(tmp_db_path, tmp_path):
     """CSV export produces correct headers and row count."""
-    db = Path(tmp_db_path)
     job = ScanJob(source_path="/data/scans")
-    create_job(job, db_path=db)
+    create_job(job, db_path=tmp_db_path)
 
     f1 = Finding(job_id=job.job_id, entity_type="EMAIL_ADDRESS", start=15, end=35, score=0.9, text_snippet="<redacted>")
     f2 = Finding(job_id=job.job_id, entity_type="PERSON", start=5, end=14, score=0.85, text_snippet="<redacted>")
-    save_finding(f1, db_path=db)
-    save_finding(f2, db_path=db)
+    save_finding(f1, db_path=tmp_db_path)
+    save_finding(f2, db_path=tmp_db_path)
 
     csv_path = tmp_path / "findings.csv"
-    count = export_csv(job.job_id, csv_path, db_path=db)
+    count = export_csv(job.job_id, csv_path, db_path=tmp_db_path)
 
     assert count == 2
     assert csv_path.exists()

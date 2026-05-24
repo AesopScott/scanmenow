@@ -83,11 +83,13 @@ def get_findings_for_job(job_id: str, db_path: Path | None = None) -> List[Findi
     """
     init_db(db_path)
     conn = get_connection(db_path)
-    rows = conn.execute(
-        "SELECT * FROM findings WHERE job_id = ? ORDER BY start",
-        (job_id,),
-    ).fetchall()
-    conn.close()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM findings WHERE job_id = ? ORDER BY start",
+            (job_id,),
+        ).fetchall()
+    finally:
+        conn.close()
     return [
         Finding(
             finding_id=row["finding_id"],
