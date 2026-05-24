@@ -1,0 +1,48 @@
+{
+    "archived_tasks": [
+        {
+            "number": 2,
+            "title": "Group A - Project Setup & CLI Foundation",
+            "description": "Python project initialization with uv, Typer CLI scaffold, basic smoke tests, and project structure (22 subtasks)",
+            "category": "feature",
+            "priority": 100,
+            "status": "production",
+            "impact": "standard",
+            "phase": null,
+            "phase_task": null,
+            "parent": 1,
+            "created_at": "2026-05-23",
+            "completed_at": "2026-05-24",
+            "dependencies": [],
+            "branch": "task/2-group-a-project-setup-cli-foundation",
+            "pr_url": "https://github.com/AesopScott/scanmenow/pull/1",
+            "project_source": "scanmenow",
+            "promoted_via_pr": "1",
+            "promoted_at": "2026-05-24T22:10:04Z",
+            "objective": {
+                "statement": "Establish the Python project foundation: uv-managed skeleton, Presidio+spaCy detection core, and SQLite findings storage — all verified by passing smoke tests.",
+                "successCriteria": [
+                    "uv run scanmenow --help exits 0 with Typer help text",
+                    "Presidio Analyzer detects EMAIL_ADDRESS in sample text",
+                    "Presidio Anonymizer redacts EMAIL_ADDRESS in sample text",
+                    "spaCy en_core_web_lg loads and detects a PERSON entity",
+                    "SQLite DB initializes, CRUD round-trips findings, CSV export produces correct output"
+                ],
+                "nonGoals": [
+                    "File walker or scanner implementations",
+                    "Policy file format or schema",
+                    "Electron app scaffold",
+                    "Firestore integration",
+                    "Any UI work"
+                ]
+            },
+            "review_summary": {
+                "claude_model": "claude-sonnet-4-6",
+                "claude_verdict": "REQUEST CHANGES (resolved in c9e65dcf)",
+                "codex_model": "GPT-5",
+                "codex_verdict": "APPROVE",
+                "final_verdict": "APPROVE — all findings resolved before merge"
+            }
+        }
+    ]
+}

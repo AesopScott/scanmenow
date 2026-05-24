@@ -1,4 +1,4 @@
-﻿{
+{
     "tasks":  [
                   {
                       "number":  1,
@@ -24,124 +24,8 @@
                       "pr_url":  null
                   },
                   {
-                      "number":  2,
-                      "title":  "Group A - Project Setup \u0026 CLI Foundation",
-                      "description":  "Python project initialization with uv, Typer CLI scaffold, basic smoke tests, and project structure (22 subtasks)",
-                      "category":  "feature",
-                      "priority":  100,
-                      "status":  "cba-complete",
-                      "impact":  "standard",
-                      "phase":  null,
-                      "phase_task":  null,
-                      "parent":  1,
-                      "created_at":  "2026-05-23",
-                      "completed_at":  null,
-                      "dependencies":  [
-
-                                       ],
-                      "plan":  "## Overview\n\nEstablish the Python project foundation for ScanMeNow: uv-managed project skeleton, Presidio+spaCy detection core, and SQLite findings storage — all verified by smoke tests. No Firestore, no file walkers, no Electron yet.\n\n## Phases\n\n1. Python Project Scaffold — uv init, src/scanmenow/ layout, pyproject.toml, tests/, pytest config, Typer CLI entry point\n2. Detection Core Integration — Presidio Analyzer + Anonymizer + spaCy en_core_web_lg, all with smoke tests\n3. Local Findings Storage — SQLite schema (ScanJob, Finding, Evidence), CRUD, CSV export, smoke test\n\n## First Proof Unit\n\nRun: uv run scanmenow --help\nExpected: exits 0, prints Typer help text\nInitial failure: entry point not wired",
-                      "proofUnits":  [
-                                         {
-                                             "number":  1,
-                                             "title":  "CLI scaffold smoke test",
-                                             "expectedBehavior":  "uv run scanmenow --help exits 0 and prints Typer help text.",
-                                             "proofType":  "smoke-command",
-                                             "exactCommand":  "uv run scanmenow --help",
-                                             "expectedInitialFailure":  "Command not found — entry point not yet wired in pyproject.toml.",
-                                             "expectedPassingEvidence":  "Exit code 0; output contains Usage: and --help description text.",
-                                             "waiverGuidance":  "N/A"
-                                         },
-                                         {
-                                             "number":  2,
-                                             "title":  "Presidio Analyzer smoke test",
-                                             "expectedBehavior":  "AnalyzerEngine detects an EMAIL_ADDRESS entity in sample text with confidence \u003e= 0.5.",
-                                             "proofType":  "failing-test",
-                                             "exactCommand":  "uv run pytest tests/test_detection.py::test_analyzer_detects_email -v",
-                                             "expectedInitialFailure":  "ModuleNotFoundError: No module named \u0027presidio_analyzer\u0027 or test file does not exist.",
-                                             "expectedPassingEvidence":  "1 passed — results list contains at least one finding with entity_type == EMAIL_ADDRESS.",
-                                             "waiverGuidance":  "N/A"
-                                         },
-                                         {
-                                             "number":  3,
-                                             "title":  "Presidio Anonymizer smoke test",
-                                             "expectedBehavior":  "AnonymizerEngine redacts the detected email, replacing it with \u003cEMAIL_ADDRESS\u003e.",
-                                             "proofType":  "failing-test",
-                                             "exactCommand":  "uv run pytest tests/test_detection.py::test_anonymizer_redacts_email -v",
-                                             "expectedInitialFailure":  "ModuleNotFoundError: No module named \u0027presidio_anonymizer\u0027 or test does not exist.",
-                                             "expectedPassingEvidence":  "1 passed — anonymized text contains \u003cEMAIL_ADDRESS\u003e and not the original email value.",
-                                             "waiverGuidance":  "N/A"
-                                         },
-                                         {
-                                             "number":  4,
-                                             "title":  "spaCy NER smoke test",
-                                             "expectedBehavior":  "en_core_web_lg loads, processes sample text, returns at least one PERSON entity. Load time logged.",
-                                             "proofType":  "failing-test",
-                                             "exactCommand":  "uv run pytest tests/test_detection.py::test_spacy_detects_person -v",
-                                             "expectedInitialFailure":  "OSError: [E050] Can\u0027t find model \u0027en_core_web_lg\u0027 or test does not exist.",
-                                             "expectedPassingEvidence":  "1 passed — doc.ents contains at least one entity with label_ == PERSON.",
-                                             "waiverGuidance":  "N/A"
-                                         },
-                                         {
-                                             "number":  5,
-                                             "title":  "SQLite CRUD + CSV export smoke test",
-                                             "expectedBehavior":  "ScanJob created, two Findings saved and queried back, exported to CSV with correct headers and row count.",
-                                             "proofType":  "failing-test",
-                                             "exactCommand":  "uv run pytest tests/test_storage.py -v",
-                                             "expectedInitialFailure":  "ModuleNotFoundError or FileNotFoundError — storage module does not exist.",
-                                             "expectedPassingEvidence":  "3 passed — job creation, finding query, and CSV export all pass. CSV has headers job_id,entity_type,start,end,score,text_snippet and 2 data rows.",
-                                             "waiverGuidance":  "N/A"
-                                         }
-                                     ],
-                      "branch":  "task/2-group-a-project-setup-cli-foundation",
-                      "pr_url":  "https://github.com/AesopScott/scanmenow/pull/1",
-                      "objective":  {
-                                        "statement":  "Establish the Python project foundation: uv-managed skeleton, Presidio+spaCy detection core, and SQLite findings storage — all verified by passing smoke tests.",
-                                        "successCriteria":  [
-                                                                "uv run scanmenow --help exits 0 with Typer help text",
-                                                                "Presidio Analyzer detects EMAIL_ADDRESS in sample text",
-                                                                "Presidio Anonymizer redacts EMAIL_ADDRESS in sample text",
-                                                                "spaCy en_core_web_lg loads and detects a PERSON entity",
-                                                                "SQLite DB initializes, CRUD round-trips findings, CSV export produces correct output"
-                                                            ],
-                                        "nonGoals":  [
-                                                         "File walker or scanner implementations",
-                                                         "Policy file format or schema",
-                                                         "Electron app scaffold",
-                                                         "Firestore integration",
-                                                         "Any UI work"
-                                                     ],
-                                        "proofMap":  [
-                                                         {
-                                                             "criterion":  "uv run scanmenow --help exits 0 with Typer help text",
-                                                             "proofUnit":  1
-                                                         },
-                                                         {
-                                                             "criterion":  "Presidio Analyzer detects EMAIL_ADDRESS in sample text",
-                                                             "proofUnit":  2
-                                                         },
-                                                         {
-                                                             "criterion":  "Presidio Anonymizer redacts EMAIL_ADDRESS in sample text",
-                                                             "proofUnit":  3
-                                                         },
-                                                         {
-                                                             "criterion":  "spaCy en_core_web_lg loads and detects a PERSON entity",
-                                                             "proofUnit":  4
-                                                         },
-                                                         {
-                                                             "criterion":  "SQLite DB initializes, CRUD round-trips findings, CSV export produces correct output",
-                                                             "proofUnit":  5
-                                                         }
-                                                     ],
-                                        "stopConditions":  [
-                                                               "uv is not installed in the build environment",
-                                                               "Presidio cannot be installed due to Python version incompatibility",
-                                                               "spaCy model download fails due to network access restrictions"
-                                                           ]
-                                    }
-                  },
-                  {
                       "number":  3,
-                      "title":  "Group B - HIPAA Safe Harbor \u0026 Presidio Analysis",
+                      "title":  "Group B - HIPAA Safe Harbor & Presidio Analysis",
                       "description":  "Gap analysis of 18 HIPAA Safe Harbor identifiers against Presidio built-ins, identify missing detectors, design detection approach (32 subtasks)",
                       "category":  "feature",
                       "priority":  99,
@@ -164,7 +48,7 @@
                   },
                   {
                       "number":  4,
-                      "title":  "Group C - Synthetic PHI Corpus \u0026 Golden Findings",
+                      "title":  "Group C - Synthetic PHI Corpus & Golden Findings",
                       "description":  "Build synthetic PHI test corpus covering all 18 identifiers with golden findings JSON for validation and accuracy benchmarking (22 subtasks)",
                       "category":  "feature",
                       "priority":  98,
@@ -187,7 +71,7 @@
                   },
                   {
                       "number":  5,
-                      "title":  "Group D - Filesystem Walker \u0026 Integration",
+                      "title":  "Group D - Filesystem Walker & Integration",
                       "description":  "Local filesystem walker with path resolution, skip patterns, symlink policy, max-depth limits, and end-to-end CLI integration (21 subtasks)",
                       "category":  "feature",
                       "priority":  97,
@@ -210,7 +94,7 @@
                   },
                   {
                       "number":  6,
-                      "title":  "Group E - Cloud \u0026 Retention Services",
+                      "title":  "Group E - Cloud & Retention Services",
                       "description":  "Firestore connection layer with environment flag for local dev, retention policy evaluation, and cloud integration (4 subtasks)",
                       "category":  "feature",
                       "priority":  96,
@@ -233,7 +117,7 @@
                   },
                   {
                       "number":  7,
-                      "title":  "Group F - Phase 1 Exit Gate \u0026 Verification",
+                      "title":  "Group F - Phase 1 Exit Gate & Verification",
                       "description":  "Accuracy threshold validation, CLI functional tests on real fixture directory, documentation, and Phase 1 completion (1 subtask)",
                       "category":  "feature",
                       "priority":  95,
