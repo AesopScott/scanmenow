@@ -1,7 +1,5 @@
 """Shared pytest fixtures for scanmenow tests."""
 
-import os
-import tempfile
 import pytest
 
 

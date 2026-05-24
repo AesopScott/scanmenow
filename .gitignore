@@ -34,3 +34,6 @@ Thumbs.db
 # scanmenow data
 *.db
 *.db-journal
+
+# Polaris dev tooling (session-specific runtime config)
+.mcp.json

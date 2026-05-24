@@ -1,6 +1,7 @@
 """Smoke tests for the scanmenow CLI entry point."""
 
 from typer.testing import CliRunner
+from scanmenow import __version__
 from scanmenow.cli import app
 
 runner = CliRunner()
@@ -23,4 +24,4 @@ def test_version_flag():
     """--version prints version and exits 0."""
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert "0.1.0" in result.output
+    assert __version__ in result.output

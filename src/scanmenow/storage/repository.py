@@ -46,6 +46,7 @@ def save_finding(finding: Finding, db_path: Path | None = None) -> Finding:
     Returns:
         The inserted Finding (unchanged).
     """
+    init_db(db_path)
     conn = get_connection(db_path)
     with conn:
         conn.execute(
@@ -80,6 +81,7 @@ def get_findings_for_job(job_id: str, db_path: Path | None = None) -> List[Findi
     Returns:
         List of Finding objects.
     """
+    init_db(db_path)
     conn = get_connection(db_path)
     rows = conn.execute(
         "SELECT * FROM findings WHERE job_id = ? ORDER BY start",
@@ -115,6 +117,7 @@ def export_csv(job_id: str, output_path: Path, db_path: Path | None = None) -> i
     Returns:
         Number of rows written (excluding header).
     """
+    init_db(db_path)
     findings = get_findings_for_job(job_id, db_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", newline="", encoding="utf-8") as f:

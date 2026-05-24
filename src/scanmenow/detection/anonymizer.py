@@ -30,6 +30,8 @@ def anonymize_text(
         Anonymized text with entities replaced by <ENTITY_TYPE> tags.
     """
     engine = anonymizer or build_anonymizer()
+    # new_value=None tells Presidio to substitute the entity type tag,
+    # e.g. "support@example.com" → "<EMAIL_ADDRESS>". This is intentional.
     result = engine.anonymize(
         text=text,
         analyzer_results=analyzer_results,
