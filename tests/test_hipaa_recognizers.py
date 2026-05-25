@@ -16,12 +16,17 @@ Proof Unit 4 (PU4):
   AnalyzerEngine multi-entity integration
   Run: uv run pytest tests/test_hipaa_recognizers.py::test_analyzer_detects_multiple_entities -v
   Expected: 1 passed — >= 5 distinct entity types detected
+
+Review-driven additions (post-PR-review):
+  Threshold guard, numeric collision, vehicle false-positive, VIN invalid-char tests.
+  Run: uv run pytest tests/test_hipaa_recognizers.py -k "no_context or collision or product_code or invalid_chars" -v
+  Expected: 4 passed
 """
 
 import pytest
 from presidio_analyzer import AnalyzerEngine
 
-from scanmenow.detection.recognizers import ALL_RECOGNIZERS
+from scanmenow.detection.analyzer import build_analyzer
 
 # ---------------------------------------------------------------------------
 # Score threshold used in all tests — recall-biased; matches the docs spec
@@ -31,16 +36,15 @@ THRESHOLD = 0.5
 
 # ---------------------------------------------------------------------------
 # Shared engine fixture (session-scoped for performance)
+# Uses build_analyzer() — the same production factory as the real application.
+# This ensures the test engine and production engine are always identical.
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="session")
 def hipaa_engine() -> AnalyzerEngine:
-    """AnalyzerEngine with all 7 custom HIPAA recognizers registered."""
-    engine = AnalyzerEngine()
-    for recognizer in ALL_RECOGNIZERS:
-        engine.registry.add_recognizer(recognizer)
-    return engine
+    """AnalyzerEngine built via build_analyzer() — same factory as production."""
+    return build_analyzer()
 
 
 def _find(hipaa_engine: AnalyzerEngine, text: str, entity_type: str) -> list:
@@ -225,4 +229,76 @@ def test_analyzer_detects_multiple_entities(hipaa_engine: AnalyzerEngine) -> Non
     assert len(distinct_types) >= 5, (
         f"Expected >= 5 distinct entity types, got {len(distinct_types)}: "
         f"{sorted(distinct_types)}"
+    )
+
+
+# ===========================================================================
+# Review-driven additions — threshold guards, collision, false-positive guards
+# ===========================================================================
+
+
+def test_bare_numeric_no_context_no_hipaa_match(hipaa_engine: AnalyzerEngine) -> None:
+    """
+    A bare 8-digit number with zero PHI context words must not fire any custom
+    HIPAA recognizer. All broad-numeric patterns (score=0.25) require a context
+    boost to reach THRESHOLD=0.5; without context they stay well below threshold.
+    """
+    text = "The quantity ordered was 12345678 units for the warehouse dispatch."
+    custom_entities = {
+        "MEDICAL_RECORD_NUMBER",
+        "HEALTH_PLAN_BENEFICIARY",
+        "ACCOUNT_NUMBER",
+        "CERTIFICATE_LICENSE_NUMBER",
+        "DEVICE_IDENTIFIER",
+    }
+    results = hipaa_engine.analyze(text=text, language="en", score_threshold=THRESHOLD)
+    fired = {r.entity_type for r in results} & custom_entities
+    assert fired == set(), (
+        f"Expected no custom HIPAA entity types for context-free numeric, got: {fired}"
+    )
+
+
+def test_numeric_collision_multi_context_documented(hipaa_engine: AnalyzerEngine) -> None:
+    """
+    When an 8-digit number appears with context words for multiple recognizers,
+    at least one entity type must fire (confirms context boosting works). Multiple
+    entity types on the same span is expected recall-biased behaviour — this test
+    documents that overlap rather than treating it as a failure.
+    """
+    # "account" context → AccountNumberRecognizer; "medical record" → MRN
+    text = "Patient account medical record 12345678 is on file with the billing team."
+    results = hipaa_engine.analyze(text=text, language="en", score_threshold=THRESHOLD)
+    number_findings = [r for r in results if "12345678" in text[r.start:r.end]]
+    entity_types = {r.entity_type for r in number_findings}
+    assert len(entity_types) >= 1, (
+        f"Expected at least one entity type on numeric span with multi-recognizer "
+        f"context, got: {entity_types}"
+    )
+
+
+def test_vehicle_product_code_no_false_positive(hipaa_engine: AnalyzerEngine) -> None:
+    """
+    A product-code-shaped string ('AB1234') without any vehicle context words
+    must not reach THRESHOLD. Base score of license_plate_us is 0.30; a context
+    boost from vehicle-adjacent keywords is required to cross 0.5.
+    """
+    text = "Order AB1234 has been processed for shipment to the warehouse."
+    findings = _find(hipaa_engine, text, "VEHICLE_IDENTIFIER")
+    assert len(findings) == 0, (
+        f"Unexpected VEHICLE_IDENTIFIER on product-code-shaped string: {findings}"
+    )
+
+
+def test_vehicle_vin_invalid_chars_not_detected(hipaa_engine: AnalyzerEngine) -> None:
+    """
+    A 17-character string containing 'O' (excluded by NHTSA VIN charset) must
+    not match vin_standard. The regex [A-HJ-NPR-Z0-9]{17} explicitly excludes
+    I, O, and Q per the NHTSA specification.
+    """
+    # 'O' at position 15 makes this an invalid VIN per NHTSA charset
+    text = "The vehicle VIN 1HGBH41JXMN10918O is on record."
+    findings = _find(hipaa_engine, text, "VEHICLE_IDENTIFIER")
+    assert len(findings) == 0, (
+        f"Unexpected VIN match on string containing invalid NHTSA character 'O': "
+        f"{findings}"
     )

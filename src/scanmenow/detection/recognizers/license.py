@@ -44,11 +44,14 @@ class CertificateLicenseRecognizer(PatternRecognizer):
             regex=r"\b[A-Z]{2}\d{7}\b",
             score=0.70,
         ),
-        # NPI: 10-digit numeric starting with 1 or 2
+        # NPI: 10-digit numeric starting with 1 or 2 (needs context to reach threshold)
+        # Score intentionally below THRESHOLD=0.5 — requires NPI context keyword boost.
+        # A 10-digit number starting with 1 or 2 is too broad to fire without context
+        # (matches phone numbers, reference numbers, order IDs, etc.).
         Pattern(
             name="npi_number",
             regex=r"\b[12]\d{9}\b",
-            score=0.50,
+            score=0.30,
         ),
         # Alphanumeric 4-12 chars (needs context to pass threshold)
         Pattern(

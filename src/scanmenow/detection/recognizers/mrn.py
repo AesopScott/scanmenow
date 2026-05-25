@@ -6,6 +6,12 @@ Detects medical record numbers (MRNs) using:
   - Context keywords boost score via AnalyzerEngine (+0.35)
 
 Recall-biased: missing PHI is worse than a false positive.
+
+Accepted false-positive surface (by design):
+  - mrn_numeric (\\b\\d{6,10}\\b, score=0.25): requires context boost to reach
+    THRESHOLD=0.5. Without a context keyword, bare 6-10 digit numbers (invoice
+    IDs, order numbers, confirmation codes, date fragments) will not fire.
+    With context, some non-MRN numbers will be flagged — this is acceptable.
 """
 
 from presidio_analyzer import Pattern, PatternRecognizer

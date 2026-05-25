@@ -5,6 +5,14 @@ Detects medical device identifiers and equipment serial numbers.
 High variability across manufacturers — recall-biased, context required.
 
 Context keywords required to distinguish from generic numeric strings.
+
+Accepted false-positive surface (by design):
+  - device_alphanumeric (\\b[A-Z]{1,5}[-]?\\d{5,12}\\b, score=0.30): with serial/
+    device context, will match product codes, model numbers, and lot numbers that
+    are not device identifiers. Acceptable given high variability across
+    manufacturers and the recall-biased design intent.
+  - device_numeric (\\b\\d{6,15}\\b, score=0.25): requires context boost. Will
+    match any long numeric string near serial/UDI context keywords.
 """
 
 from presidio_analyzer import Pattern, PatternRecognizer

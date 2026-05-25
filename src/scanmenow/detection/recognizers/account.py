@@ -5,6 +5,13 @@ Supplements Presidio's native US_BANK_NUMBER with broader recall for
 non-bank accounts: utility, retail, medical billing, patient financial.
 
 Context keywords required to distinguish from other number sequences.
+
+Accepted false-positive surface (by design):
+  - account_numeric (\\b\\d{6,16}\\b, score=0.25): requires context boost to reach
+    THRESHOLD=0.5. With account-adjacent context words (e.g. "invoice number",
+    "reference number"), some ordinary business numbers (order IDs, confirmation
+    codes, tracking numbers) will be flagged — this is acceptable for a
+    recall-biased medical/financial document scanner.
 """
 
 from presidio_analyzer import Pattern, PatternRecognizer

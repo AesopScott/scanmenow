@@ -6,6 +6,13 @@ Detects health plan beneficiary numbers:
   - Context keywords required for low-confidence patterns
 
 Recall-biased: missing PHI is worse than a false positive.
+
+Accepted false-positive surface (by design):
+  - beneficiary_numeric (\\b\\d{8,12}\\b, score=0.25): requires context boost to
+    reach THRESHOLD=0.5. With beneficiary/insurance context, will match date
+    strings (YYYYMMDD), order numbers, and other 8-12 digit values — acceptable.
+  - beneficiary_alphanumeric (\\b[A-Z]{1,3}\\d{6,12}\\b, score=0.30): with context,
+    will match product codes and reference IDs of similar format — acceptable.
 """
 
 from presidio_analyzer import Pattern, PatternRecognizer

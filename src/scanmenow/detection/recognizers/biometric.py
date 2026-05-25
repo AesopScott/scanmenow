@@ -53,7 +53,12 @@ class BiometricIdentifierRecognizer(PatternRecognizer):
             regex=r"\bfacial\s+(?:recognition|scan|id)\b",
             score=0.65,
         ),
-        # Biometric (generic keyword — lower confidence, needs context)
+        # Biometric (generic keyword — lower confidence).
+        # Note: "biometric" also appears in CONTEXT_WORDS, so every match of this
+        # pattern triggers its own context boost, effectively making it fire above
+        # threshold unconditionally. This is intentional for the best-effort
+        # identifier (#16) — any mention of "biometric" in a document is worth
+        # flagging regardless of surrounding context.
         Pattern(
             name="biometric_generic",
             regex=r"\bbiometric(?:s|ally)?\b",
