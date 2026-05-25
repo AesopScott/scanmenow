@@ -3,10 +3,20 @@
 from typing import List
 from presidio_analyzer import AnalyzerEngine, RecognizerResult
 
+from scanmenow.detection.recognizers import ALL_RECOGNIZERS
+
 
 def build_analyzer() -> AnalyzerEngine:
-    """Create and return a configured AnalyzerEngine instance."""
-    return AnalyzerEngine()
+    """
+    Create and return a configured AnalyzerEngine instance.
+
+    Registers all 7 custom HIPAA Safe Harbor PatternRecognizers alongside
+    Presidio's built-in recognizers for full 18-identifier coverage.
+    """
+    engine = AnalyzerEngine()
+    for recognizer in ALL_RECOGNIZERS:
+        engine.registry.add_recognizer(recognizer)
+    return engine
 
 
 def analyze_text(
