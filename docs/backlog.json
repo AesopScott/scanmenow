@@ -1,142 +1,198 @@
 {
-    "tasks":  [
-                  {
-                      "number":  1,
-                      "title":  "Build full PII/PHI scanner, reduction, migration, and retention platform",
-                      "description":  "Turn ScanMeNow from a Phileas-derived redaction library into a full data governance engine for discovering, reducing, migrating, and retaining sensitive data. Parent epic for all Phase 1-7 subtasks.",
-                      "category":  "feature",
-                      "priority":  0,
-                      "status":  "backlog",
-                      "impact":  "major",
-                      "phase":  null,
-                      "phase_task":  null,
-                      "parent":  null,
-                      "created_at":  "2026-05-20",
-                      "completed_at":  null,
-                      "dependencies":  [
-
-                                       ],
-                      "plan":  null,
-                      "proofUnits":  [
-
-                                     ],
-                      "branch":  null,
-                      "pr_url":  null
-                  },
-                  {
-                      "number":  3,
-                      "title":  "Group B - HIPAA Safe Harbor & Presidio Analysis",
-                      "description":  "Gap analysis of 18 HIPAA Safe Harbor identifiers against Presidio built-ins, identify missing detectors, design detection approach (32 subtasks)",
-                      "category":  "feature",
-                      "priority":  99,
-                      "status":  "backlog",
-                      "impact":  "standard",
-                      "phase":  null,
-                      "phase_task":  null,
-                      "parent":  1,
-                      "created_at":  "2026-05-23",
-                      "completed_at":  null,
-                      "dependencies":  [
-
-                                       ],
-                      "plan":  null,
-                      "proofUnits":  [
-
-                                     ],
-                      "branch":  null,
-                      "pr_url":  null
-                  },
-                  {
-                      "number":  4,
-                      "title":  "Group C - Synthetic PHI Corpus & Golden Findings",
-                      "description":  "Build synthetic PHI test corpus covering all 18 identifiers with golden findings JSON for validation and accuracy benchmarking (22 subtasks)",
-                      "category":  "feature",
-                      "priority":  98,
-                      "status":  "backlog",
-                      "impact":  "standard",
-                      "phase":  null,
-                      "phase_task":  null,
-                      "parent":  1,
-                      "created_at":  "2026-05-23",
-                      "completed_at":  null,
-                      "dependencies":  [
-
-                                       ],
-                      "plan":  null,
-                      "proofUnits":  [
-
-                                     ],
-                      "branch":  null,
-                      "pr_url":  null
-                  },
-                  {
-                      "number":  5,
-                      "title":  "Group D - Filesystem Walker & Integration",
-                      "description":  "Local filesystem walker with path resolution, skip patterns, symlink policy, max-depth limits, and end-to-end CLI integration (21 subtasks)",
-                      "category":  "feature",
-                      "priority":  97,
-                      "status":  "backlog",
-                      "impact":  "standard",
-                      "phase":  null,
-                      "phase_task":  null,
-                      "parent":  1,
-                      "created_at":  "2026-05-23",
-                      "completed_at":  null,
-                      "dependencies":  [
-
-                                       ],
-                      "plan":  null,
-                      "proofUnits":  [
-
-                                     ],
-                      "branch":  null,
-                      "pr_url":  null
-                  },
-                  {
-                      "number":  6,
-                      "title":  "Group E - Cloud & Retention Services",
-                      "description":  "Firestore connection layer with environment flag for local dev, retention policy evaluation, and cloud integration (4 subtasks)",
-                      "category":  "feature",
-                      "priority":  96,
-                      "status":  "backlog",
-                      "impact":  "standard",
-                      "phase":  null,
-                      "phase_task":  null,
-                      "parent":  1,
-                      "created_at":  "2026-05-23",
-                      "completed_at":  null,
-                      "dependencies":  [
-
-                                       ],
-                      "plan":  null,
-                      "proofUnits":  [
-
-                                     ],
-                      "branch":  null,
-                      "pr_url":  null
-                  },
-                  {
-                      "number":  7,
-                      "title":  "Group F - Phase 1 Exit Gate & Verification",
-                      "description":  "Accuracy threshold validation, CLI functional tests on real fixture directory, documentation, and Phase 1 completion (1 subtask)",
-                      "category":  "feature",
-                      "priority":  95,
-                      "status":  "backlog",
-                      "impact":  "standard",
-                      "phase":  null,
-                      "phase_task":  null,
-                      "parent":  1,
-                      "created_at":  "2026-05-23",
-                      "completed_at":  null,
-                      "dependencies":  [
-
-                                       ],
-                      "plan":  null,
-                      "proofUnits":  [
-
-                                     ],
-                      "branch":  null,
-                      "pr_url":  null
-                  }
-              ]
+    "tasks": [
+        {
+            "number": 1,
+            "title": "Build full PII/PHI scanner, reduction, migration, and retention platform",
+            "description": "Turn ScanMeNow from a Phileas-derived redaction library into a full data governance engine for discovering, reducing, migrating, and retaining sensitive data. Parent epic for all Phase 1-7 subtasks.",
+            "category": "feature",
+            "priority": 0,
+            "status": "backlog",
+            "impact": "major",
+            "phase": null,
+            "phase_task": null,
+            "parent": null,
+            "created_at": "2026-05-20",
+            "completed_at": null,
+            "dependencies": [],
+            "plan": null,
+            "proofUnits": [],
+            "branch": null,
+            "pr_url": null
+        },
+        {
+            "number": 3,
+            "title": "Group B - HIPAA Safe Harbor & Presidio Analysis",
+            "description": "Gap analysis of 18 HIPAA Safe Harbor identifiers against Presidio built-ins, identify missing detectors, design detection approach (32 subtasks)",
+            "category": "feature",
+            "priority": 99,
+            "status": "planned",
+            "impact": "standard",
+            "phase": null,
+            "phase_task": null,
+            "parent": 1,
+            "created_at": "2026-05-23",
+            "completed_at": null,
+            "dependencies": [],
+            "plan": "## Overview\n\nExtend the Presidio detection core to cover all 18 HIPAA Safe Harbor identifiers. Gap analysis confirms 10 are natively covered by Presidio; 7 need custom PatternRecognizer implementations (MRN, health plan beneficiary, account number, certificate/license, vehicle identifier, device identifier, biometric). Full-face photo detection is out of scope for text scanning.\n\n## Phases\n\n1. Gap Analysis & Coverage Matrix — audit Presidio built-ins, produce docs/hipaa_coverage.json\n2. Custom Recognizer Sub-Package — 7 PatternRecognizer modules with unit tests (TDD)\n3. AnalyzerEngine Integration — register ALL_RECOGNIZERS, multi-entity integration test\n\n## First Proof Unit\n\nTask 1.1: docs/hipaa_coverage.json exists with 18 entries.\nVerify: uv run python -c \"import json, pathlib; d=json.loads(pathlib.Path('docs/hipaa_coverage.json').read_text()); assert len(d)==18\"",
+            "proofUnits": [
+                {
+                    "number": 1,
+                    "title": "Coverage matrix complete",
+                    "expectedBehavior": "docs/hipaa_coverage.json exists with exactly 18 entries, each documenting an identifier's coverage status, recognizer type, and confidence notes.",
+                    "proofType": "smoke-command",
+                    "exactCommand": "uv run python -c \"import json, pathlib; d=json.loads(pathlib.Path('docs/hipaa_coverage.json').read_text()); assert len(d)==18, f'Expected 18, got {len(d)}'; print(f'OK - {len(d)} identifiers documented')\"",
+                    "expectedInitialFailure": "FileNotFoundError - docs/hipaa_coverage.json does not exist yet.",
+                    "expectedPassingEvidence": "Prints 'OK - 18 identifiers documented' and exits 0.",
+                    "waiverGuidance": "N/A"
+                },
+                {
+                    "number": 2,
+                    "title": "Structured-format recognizers pass unit tests",
+                    "expectedBehavior": "MedicalRecordRecognizer, VehicleIdentifierRecognizer, and HealthPlanBeneficiaryRecognizer each detect matching sample text and return no findings on plainly unrelated text.",
+                    "proofType": "failing-test",
+                    "exactCommand": "uv run pytest tests/test_hipaa_recognizers.py -k \"mrn or vehicle or beneficiary\" -v",
+                    "expectedInitialFailure": "ModuleNotFoundError or test file does not exist.",
+                    "expectedPassingEvidence": "6 passed - positive and negative test for each of the 3 recognizers.",
+                    "waiverGuidance": "N/A"
+                },
+                {
+                    "number": 3,
+                    "title": "Context-anchored recognizers pass unit tests",
+                    "expectedBehavior": "AccountNumberRecognizer, CertificateLicenseRecognizer, DeviceIdentifierRecognizer, and BiometricIdentifierRecognizer each detect matching sample text and return no findings on plainly unrelated text.",
+                    "proofType": "failing-test",
+                    "exactCommand": "uv run pytest tests/test_hipaa_recognizers.py -k \"account or license or device or biometric\" -v",
+                    "expectedInitialFailure": "ModuleNotFoundError - recognizer modules do not exist yet.",
+                    "expectedPassingEvidence": "8 passed - positive and negative test for each of the 4 recognizers.",
+                    "waiverGuidance": "N/A"
+                },
+                {
+                    "number": 4,
+                    "title": "AnalyzerEngine multi-entity integration",
+                    "expectedBehavior": "AnalyzerEngine with ALL_RECOGNIZERS registered detects at least 5 distinct entity types in a single multi-entity PHI sample text.",
+                    "proofType": "failing-test",
+                    "exactCommand": "uv run pytest tests/test_hipaa_recognizers.py::test_analyzer_detects_multiple_entities -v",
+                    "expectedInitialFailure": "ImportError or assertion failure - custom recognizers not yet registered in AnalyzerEngine.",
+                    "expectedPassingEvidence": "1 passed - findings contain >= 5 distinct entity_type values.",
+                    "waiverGuidance": "N/A"
+                }
+            ],
+            "branch": null,
+            "pr_url": null,
+            "objective": {
+                "statement": "Extend the Presidio-based detection core to cover all 18 HIPAA Safe Harbor identifiers by implementing 7 custom PatternRecognizer modules and integrating them into the AnalyzerEngine, verified by a complete test suite and a documented coverage matrix.",
+                "successCriteria": [
+                    "docs/hipaa_coverage.json documents all 18 Safe Harbor identifiers with status, recognizer_type, and confidence_notes",
+                    "Custom PatternRecognizer implementations exist for all 7 missing identifiers and pass positive unit tests",
+                    "Negative unit tests verify no false matches on plainly unrelated text for each custom recognizer",
+                    "AnalyzerEngine registers all 7 custom recognizers and detects them alongside native Presidio entities",
+                    "Multi-entity integration test detects >= 5 distinct entity types from a single sample text"
+                ],
+                "nonGoals": [
+                    "Filesystem scanning or file walker integration (Task #5)",
+                    "Electron UI for displaying findings",
+                    "Redact/migrate/retain action logic (Tasks #5-6)",
+                    "Full-face photograph detection (not applicable to text scanning)"
+                ],
+                "proofMap": [
+                    {
+                        "criterion": "docs/hipaa_coverage.json documents all 18 Safe Harbor identifiers with status, recognizer_type, and confidence_notes",
+                        "proofUnit": 1
+                    },
+                    {
+                        "criterion": "Custom PatternRecognizer implementations exist for all 7 missing identifiers and pass positive unit tests",
+                        "proofUnit": 2
+                    },
+                    {
+                        "criterion": "Negative unit tests verify no false matches on plainly unrelated text for each custom recognizer",
+                        "proofUnit": 3
+                    },
+                    {
+                        "criterion": "AnalyzerEngine registers all 7 custom recognizers and detects them alongside native Presidio entities",
+                        "proofUnit": 4
+                    },
+                    {
+                        "criterion": "Multi-entity integration test detects >= 5 distinct entity types from a single sample text",
+                        "proofUnit": 4
+                    }
+                ],
+                "stopConditions": []
+            }
+        },
+        {
+            "number": 4,
+            "title": "Group C - Synthetic PHI Corpus & Golden Findings",
+            "description": "Build synthetic PHI test corpus covering all 18 identifiers with golden findings JSON for validation and accuracy benchmarking (22 subtasks)",
+            "category": "feature",
+            "priority": 98,
+            "status": "backlog",
+            "impact": "standard",
+            "phase": null,
+            "phase_task": null,
+            "parent": 1,
+            "created_at": "2026-05-23",
+            "completed_at": null,
+            "dependencies": [],
+            "plan": null,
+            "proofUnits": [],
+            "branch": null,
+            "pr_url": null
+        },
+        {
+            "number": 5,
+            "title": "Group D - Filesystem Walker & Integration",
+            "description": "Local filesystem walker with path resolution, skip patterns, symlink policy, max-depth limits, and end-to-end CLI integration (21 subtasks)",
+            "category": "feature",
+            "priority": 97,
+            "status": "backlog",
+            "impact": "standard",
+            "phase": null,
+            "phase_task": null,
+            "parent": 1,
+            "created_at": "2026-05-23",
+            "completed_at": null,
+            "dependencies": [],
+            "plan": null,
+            "proofUnits": [],
+            "branch": null,
+            "pr_url": null
+        },
+        {
+            "number": 6,
+            "title": "Group E - Cloud & Retention Services",
+            "description": "Firestore connection layer with environment flag for local dev, retention policy evaluation, and cloud integration (4 subtasks)",
+            "category": "feature",
+            "priority": 96,
+            "status": "backlog",
+            "impact": "standard",
+            "phase": null,
+            "phase_task": null,
+            "parent": 1,
+            "created_at": "2026-05-23",
+            "completed_at": null,
+            "dependencies": [],
+            "plan": null,
+            "proofUnits": [],
+            "branch": null,
+            "pr_url": null
+        },
+        {
+            "number": 7,
+            "title": "Group F - Phase 1 Exit Gate & Verification",
+            "description": "Accuracy threshold validation, CLI functional tests on real fixture directory, documentation, and Phase 1 completion (1 subtask)",
+            "category": "feature",
+            "priority": 95,
+            "status": "backlog",
+            "impact": "standard",
+            "phase": null,
+            "phase_task": null,
+            "parent": 1,
+            "created_at": "2026-05-23",
+            "completed_at": null,
+            "dependencies": [],
+            "plan": null,
+            "proofUnits": [],
+            "branch": null,
+            "pr_url": null
+        }
+    ]
 }
