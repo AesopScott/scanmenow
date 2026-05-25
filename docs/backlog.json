@@ -6,7 +6,7 @@
             "description": "Turn ScanMeNow from a Phileas-derived redaction library into a full data governance engine for discovering, reducing, migrating, and retaining sensitive data. Parent epic for all Phase 1-7 subtasks.",
             "category": "feature",
             "priority": 0,
-            "status": "backlog",
+            "status": "planned",
             "impact": "major",
             "phase": null,
             "phase_task": null,
@@ -14,7 +14,7 @@
             "created_at": "2026-05-20",
             "completed_at": null,
             "dependencies": [],
-            "plan": null,
+            "plan": "## Overview\n\nScanMeNow is a data governance platform for IT/Security analysts. Target persona: an IT or security analyst running scans on behalf of a data governance program — either to execute policy (regular cadence) or to perform an initial discovery sweep when no formal policy exists yet.\n\n## Problem\n\nOrganizations store PII and PHI across file systems, databases, and cloud storage without systematic visibility. Analysts need a tool that can (1) discover where sensitive data lives, (2) reduce or redact it according to Safe Harbor rules, (3) migrate data to compliant stores, and (4) enforce retention policies.\n\n## Architecture Decision: Group-level subtasks\n\nThis parent epic (task #1) coordinates 6 delivery groups (tasks #2-7). Each group is a standalone buildable unit with its own proof units. Groups deliver sequentially: Group A sets up the CLI scaffold; Group B implements the HIPAA Safe Harbor detector set; Group C builds the synthetic PHI corpus for accuracy testing; Group D adds the filesystem walker; Group E adds cloud/Firestore integration and retention logic; Group F closes Phase 1 with exit-gate validation.\n\n## Delivery Groups\n\n- **Task #2** (Group A — Project Setup & CLI Foundation): Python project scaffold, `uv` venv, `scanmenow scan` entry point, `pyproject.toml`. ✅ build-finished\n- **Task #3** (Group B — HIPAA Safe Harbor & Presidio Analysis): 18-identifier gap analysis, 7 custom PatternRecognizer modules, AnalyzerEngine integration. ✅ build-finished\n- **Task #4** (Group C — Synthetic PHI Corpus): 18-identifier synthetic fixture files, golden `findings.json` for accuracy benchmarking.\n- **Task #5** (Group D — Filesystem Walker): Recursive walker, skip patterns, symlink policy, max-depth, end-to-end CLI wiring.\n- **Task #6** (Group E — Cloud & Retention): Firestore write layer, `USE_FIRESTORE` env flag, retention policy evaluator.\n- **Task #7** (Group F — Exit Gate): Accuracy threshold check, CLI functional tests on real fixture dir, Phase 1 sign-off.\n\n## Out of scope for Phase 1\n\nElectron UI, multi-tenant SaaS, network share scanning, binary/image scanning.",
             "proofUnits": [],
             "branch": null,
             "pr_url": null
