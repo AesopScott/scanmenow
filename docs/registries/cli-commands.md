@@ -52,16 +52,16 @@ The following subcommands are documented here as placeholders to prevent naming 
 
 ## Audit Trail — Proof of Registry Verification
 
-**Last audit:** 2026-05-23T00:00:00Z (updated by /finish-build — post-code verification)
+**Last audit:** 2026-05-25T00:00:00Z (by /cross-boundary-audit — pre-build plan validation for Task #3)
 
-**Boundaries checked:** CLI entry points (post-code verification against shipped implementation)
+**Boundaries checked:** CLI entry points (re-verified against Task #3 plan — no CLI changes planned)
 
 **Evidence recorded:**
-- 1 entry with complete producer/consumer pairs ✓ (code shipped and smoke-tested)
+- 1 entry with complete producer/consumer pairs ✓ (unchanged from Task #2 ship)
 - 0 shape mismatches
-- New identifiers introduced on task #2: `scanmenow` entry point
-- Registries match current code diff: ✓ verified (Proof Unit 1 passes — exit 0, help text present)
+- New identifiers introduced on task #3: none — Task #3 adds no CLI commands
+- Registries match current code diff: ✓ verified
 
 **Gaps identified:** none
 
-**Status:** ✓ Audit complete (post-code)
+**Status:** ✓ Audit complete (pre-build plan validation for Task #3)

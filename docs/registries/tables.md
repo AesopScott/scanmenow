@@ -89,14 +89,14 @@ One row per detected PII/PHI entity within a scan job.
 
 ## Audit Trail — Proof of Registry Verification
 
-**Last audit:** 2026-05-23T00:00:00Z (updated by /finish-build — post-code verification)
+**Last audit:** 2026-05-25T00:00:00Z (by /cross-boundary-audit — pre-build plan validation for Task #3)
 
-**Boundaries checked:** SQLite tables (post-code verification against shipped implementation)
+**Boundaries checked:** SQLite tables (re-verified against Task #3 plan — no table changes planned)
 
 **Evidence recorded:**
-- 2 entries with complete producer/consumer pairs ✓ (code shipped)
+- 2 entries with complete producer/consumer pairs ✓ (unchanged from Task #2 ship)
 - 1 entry resolved ✓ (`evidence` collapsed into `findings.text_snippet`)
-- New identifiers introduced on task #2: `scan_jobs`, `findings`
+- New identifiers introduced on task #3: none — Task #3 adds no new tables
 - Registries match current code diff: ✓ verified
 
 **Gaps resolved:**
@@ -105,5 +105,6 @@ One row per detected PII/PHI entity within a scan job.
 
 **Soft flags:**
 - `source_file` column in `findings` not listed in CSV_HEADERS (intentional — analyst export only needs the 6 listed fields; source_file visible via direct DB query)
+- `findings.entity_type` will store Task #3 custom entity type strings — see `entity-types.md` for the full registry of valid values
 
-**Status:** ✓ Audit complete (post-code)
+**Status:** ✓ Audit complete (pre-build plan validation for Task #3)

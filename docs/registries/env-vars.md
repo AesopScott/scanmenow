@@ -57,21 +57,18 @@ Controls logging verbosity for the Python backend.
 
 ## Audit Trail — Proof of Registry Verification
 
-**Last audit:** 2026-05-23T00:00:00Z (updated by /finish-build — post-code verification)
+**Last audit:** 2026-05-25T00:00:00Z (by /cross-boundary-audit — pre-build plan validation for Task #3)
 
-**Boundaries checked:** Environment variables (post-code verification against shipped implementation)
+**Boundaries checked:** Environment variables (re-verified against Task #3 plan — no env var changes planned)
 
 **Evidence recorded:**
-- 1 entry fully implemented ✓ (`SCANMENOW_DB_PATH`)
-- 1 entry planned ⚠ (`SCANMENOW_LOG_LEVEL` — not yet consumed in code, deferred to future task)
+- 1 entry fully implemented ✓ (`SCANMENOW_DB_PATH` — unchanged)
+- 1 entry still planned ⚠ (`SCANMENOW_LOG_LEVEL` — not yet consumed; carried forward again)
 - 0 shape mismatches
-- New identifiers introduced on task #2: `SCANMENOW_DB_PATH`, `SCANMENOW_LOG_LEVEL`
+- New identifiers introduced on task #3: none — Task #3 adds no env vars
 - Registries match current code diff: ✓ verified
 
-**Gaps resolved:**
-- `SCANMENOW_DB_PATH` default implemented via `DEFAULT_DB_PATH` constant in `db.py`
-
 **Soft flags:**
-- `SCANMENOW_LOG_LEVEL` is documented but not yet wired into logging config — carry forward to a future task
+- `SCANMENOW_LOG_LEVEL` documented but not yet wired — now carried forward twice. Consider scheduling in a near-term task or accepting as permanent documentation-only entry.
 
-**Status:** ✓ Audit complete (post-code)
+**Status:** ✓ Audit complete (pre-build plan validation for Task #3)
