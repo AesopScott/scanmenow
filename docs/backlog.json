@@ -25,7 +25,7 @@
             "description": "Gap analysis of 18 HIPAA Safe Harbor identifiers against Presidio built-ins, identify missing detectors, design detection approach (32 subtasks)",
             "category": "feature",
             "priority": 99,
-            "status": "build-started",
+            "status": "build-finished",
             "impact": "standard",
             "phase": null,
             "phase_task": null,
@@ -77,7 +77,7 @@
                 }
             ],
             "branch": "task/3-group-b-hipaa-safe-harbor-presidio",
-            "pr_url": null,
+            "pr_url": "https://github.com/AesopScott/scanmenow/pull/3",
             "objective": {
                 "statement": "Extend the Presidio-based detection core to cover all 18 HIPAA Safe Harbor identifiers by implementing 7 custom PatternRecognizer modules and integrating them into the AnalyzerEngine, verified by a complete test suite and a documented coverage matrix.",
                 "successCriteria": [
