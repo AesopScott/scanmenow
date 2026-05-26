@@ -1,0 +1,146 @@
+[
+    {
+        "hipaa_number": 1,
+        "hipaa_identifier": "Names",
+        "coverage_status": "native",
+        "presidio_entity_type": "PERSON",
+        "recognizer_type": "SpacyRecognizer (en_core_web_lg)",
+        "confidence_notes": "High confidence for full names in standard prose. May miss initials-only, nicknames, or names without surrounding context. Recall-biased — flags PERSON entities broadly."
+    },
+    {
+        "hipaa_number": 2,
+        "hipaa_identifier": "Geographic data smaller than state",
+        "coverage_status": "native",
+        "presidio_entity_type": "LOCATION",
+        "recognizer_type": "SpacyRecognizer (en_core_web_lg)",
+        "confidence_notes": "Covers cities, counties, zip codes, street addresses via spaCy NER. Does not enforce 'smaller than state' at detection time — post-processing filtering recommended for state-level false positives."
+    },
+    {
+        "hipaa_number": 3,
+        "hipaa_identifier": "Dates (except year) related to individual",
+        "coverage_status": "native",
+        "presidio_entity_type": "DATE_TIME",
+        "recognizer_type": "DateRecognizer",
+        "confidence_notes": "Covers birth dates, admission/discharge dates, date of death, and other date formats (MM/DD/YYYY, written month, ISO 8601). Includes year by default — HIPAA requires year-only dates to be de-identified separately if needed."
+    },
+    {
+        "hipaa_number": 4,
+        "hipaa_identifier": "Phone numbers",
+        "coverage_status": "native",
+        "presidio_entity_type": "PHONE_NUMBER",
+        "recognizer_type": "PhoneRecognizer",
+        "confidence_notes": "Covers US and international phone formats including dashes, parentheses, dots, and extensions. Shared recognizer with fax numbers (identifier #5)."
+    },
+    {
+        "hipaa_number": 5,
+        "hipaa_identifier": "Fax numbers",
+        "coverage_status": "native",
+        "presidio_entity_type": "PHONE_NUMBER",
+        "recognizer_type": "PhoneRecognizer",
+        "confidence_notes": "Fax numbers follow the same format as phone numbers. No separate recognizer needed. Context keywords ('fax', 'facsimile') may help distinguish in post-processing if differentiation is required."
+    },
+    {
+        "hipaa_number": 6,
+        "hipaa_identifier": "Email addresses",
+        "coverage_status": "native",
+        "presidio_entity_type": "EMAIL_ADDRESS",
+        "recognizer_type": "EmailRecognizer",
+        "confidence_notes": "High confidence. Standard RFC 5322 email pattern. Smoke-tested and confirmed working (Proof Unit 2, Task #2)."
+    },
+    {
+        "hipaa_number": 7,
+        "hipaa_identifier": "Social security numbers",
+        "coverage_status": "native",
+        "presidio_entity_type": "US_SSN",
+        "recognizer_type": "UsSsnRecognizer",
+        "confidence_notes": "Covers SSNs in NNN-NN-NNNN and NNNNNNNNN formats. High precision."
+    },
+    {
+        "hipaa_number": 8,
+        "hipaa_identifier": "Medical record numbers",
+        "coverage_status": "custom",
+        "presidio_entity_type": "MEDICAL_RECORD_NUMBER",
+        "recognizer_type": "MedicalRecordRecognizer (custom PatternRecognizer)",
+        "confidence_notes": "No native Presidio recognizer for patient MRNs. Custom implementation uses alphanumeric patterns (e.g., MRN-XXXXXX, 7-10 digit numeric) anchored by context keywords: 'MRN', 'medical record', 'patient ID', 'chart number'. Recall-biased."
+    },
+    {
+        "hipaa_number": 9,
+        "hipaa_identifier": "Health plan beneficiary numbers",
+        "coverage_status": "custom",
+        "presidio_entity_type": "HEALTH_PLAN_BENEFICIARY",
+        "recognizer_type": "HealthPlanBeneficiaryRecognizer (custom PatternRecognizer)",
+        "confidence_notes": "No native Presidio recognizer. Custom implementation uses alphanumeric ID patterns anchored by context keywords: 'beneficiary', 'member ID', 'plan ID', 'insurance ID', 'subscriber'. Recall-biased."
+    },
+    {
+        "hipaa_number": 10,
+        "hipaa_identifier": "Account numbers",
+        "coverage_status": "native-partial",
+        "presidio_entity_type": "ACCOUNT_NUMBER",
+        "recognizer_type": "AccountNumberRecognizer (custom PatternRecognizer) — supplements US_BANK_NUMBER",
+        "confidence_notes": "Presidio's US_BANK_NUMBER covers US bank routing/account formats. Custom ACCOUNT_NUMBER adds broader recall for non-bank accounts (utility, retail, medical billing) using numeric patterns anchored by context keywords: 'account', 'acct', 'account number', 'account #'. Both recognizers active simultaneously."
+    },
+    {
+        "hipaa_number": 11,
+        "hipaa_identifier": "Certificate and license numbers",
+        "coverage_status": "native-partial",
+        "presidio_entity_type": "CERTIFICATE_LICENSE_NUMBER",
+        "recognizer_type": "CertificateLicenseRecognizer (custom PatternRecognizer) — supplements MEDICAL_LICENSE + US_DRIVER_LICENSE",
+        "confidence_notes": "Presidio natively covers MEDICAL_LICENSE (US medical professional license) and US_DRIVER_LICENSE (US driver's license). Custom CERTIFICATE_LICENSE_NUMBER adds broader recall for professional certificates, occupational licenses, and non-US licenses using alphanumeric patterns with context keywords: 'license', 'certificate', 'cert', 'credential', 'lic #'. All three recognizers active simultaneously."
+    },
+    {
+        "hipaa_number": 12,
+        "hipaa_identifier": "Vehicle identifiers and serial numbers",
+        "coverage_status": "custom",
+        "presidio_entity_type": "VEHICLE_IDENTIFIER",
+        "recognizer_type": "VehicleIdentifierRecognizer (custom PatternRecognizer)",
+        "confidence_notes": "No native Presidio recognizer. Custom implementation covers: (1) VINs — strict 17-character NHTSA format with I/O/Q exclusion and position-based validation; (2) license plate patterns — US state plate formats. Context keywords: 'VIN', 'vehicle identification', 'plate', 'license plate'. High precision for VINs due to strict format."
+    },
+    {
+        "hipaa_number": 13,
+        "hipaa_identifier": "Device identifiers and serial numbers",
+        "coverage_status": "custom",
+        "presidio_entity_type": "DEVICE_IDENTIFIER",
+        "recognizer_type": "DeviceIdentifierRecognizer (custom PatternRecognizer)",
+        "confidence_notes": "No native Presidio recognizer. Custom implementation uses alphanumeric serial number patterns anchored by context keywords: 'serial', 'serial number', 'S/N', 'SN:', 'device ID', 'device serial', 'serial #'. Recall-biased due to high variability in serial number formats across manufacturers."
+    },
+    {
+        "hipaa_number": 14,
+        "hipaa_identifier": "Web URLs",
+        "coverage_status": "native",
+        "presidio_entity_type": "URL",
+        "recognizer_type": "UrlRecognizer",
+        "confidence_notes": "Covers http/https URLs and bare domain references. High confidence."
+    },
+    {
+        "hipaa_number": 15,
+        "hipaa_identifier": "IP address numbers",
+        "coverage_status": "native",
+        "presidio_entity_type": "IP_ADDRESS",
+        "recognizer_type": "IpRecognizer",
+        "confidence_notes": "Covers IPv4 (dotted decimal) and IPv6 formats. High confidence."
+    },
+    {
+        "hipaa_number": 16,
+        "hipaa_identifier": "Biometric identifiers",
+        "coverage_status": "custom",
+        "presidio_entity_type": "BIOMETRIC_IDENTIFIER",
+        "recognizer_type": "BiometricIdentifierRecognizer (custom PatternRecognizer)",
+        "confidence_notes": "No native Presidio recognizer. Best-effort text-description approach: detects mentions of biometric identifiers as noun phrases using keyword patterns: 'fingerprint', 'voiceprint', 'retina scan', 'iris scan', 'facial recognition', 'biometric', 'palm print', 'gait analysis'. High false-negative rate expected for non-descriptive references. Documented limitation — do not apply accuracy thresholds to this identifier."
+    },
+    {
+        "hipaa_number": 17,
+        "hipaa_identifier": "Full-face photographs and comparable images",
+        "coverage_status": "out-of-scope",
+        "presidio_entity_type": null,
+        "recognizer_type": null,
+        "confidence_notes": "Not applicable to text-based scanning. ScanMeNow is a text scanner. Image-based PHI detection is explicitly out of scope for Phase 1."
+    },
+    {
+        "hipaa_number": 18,
+        "hipaa_identifier": "Any other unique identifying number, characteristic, or code",
+        "coverage_status": "catch-all",
+        "presidio_entity_type": null,
+        "recognizer_type": null,
+        "confidence_notes": "HIPAA catch-all clause. Not directly detectable as a discrete entity type. Coverage is provided indirectly by the combination of all 17 recognizers above — any structured identifier not caught by other recognizers may still be flagged if it matches a broader pattern (e.g., ACCOUNT_NUMBER or CERTIFICATE_LICENSE_NUMBER with recall-biased tuning)."
+    }
+]
