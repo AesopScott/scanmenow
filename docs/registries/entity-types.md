@@ -526,3 +526,22 @@ Nationality, Religion, Political group — detects text mentioning someone's nat
 **Gaps identified:** 8 planned entries (Task #9 not yet built) — expected, not a problem
 
 **Status:** ✓ Audit complete (Task #9 pre-build plan validation)
+
+---
+
+**Build-start audit — 2026-05-27T16:00:00Z (by /cross-boundary-audit — pre-code validation, Task #5 branch)**
+
+**Branch:** task/5-group-d-filesystem-walker-integration (cut from main, Task #3 merged)
+
+**Boundaries checked:** All 23 Presidio entity type strings — recognizer modules, `__init__.py`, `analyzer.py`, and all tests
+
+**Evidence recorded:**
+- 9 custom entries ✓ — all 7 HIPAA custom types + `EMAIL_ADDRESS` + `PERSON` have complete producer/consumer pairs; `test_hipaa_recognizers.py` 27/27 passing on main
+- 6 native entries ✓ — confirmed by Presidio built-in registration; no bespoke test assertions needed
+- 8 Task #9 planned entries ⚠ — no code yet; correctly pre-registered
+- Task #5 introduces NO new entity types (all entity types produced by `analyze_text()` flow through `findings.entity_type` verbatim — no new type strings needed)
+- 0 mismatches on implemented entries; 0 new collision risks introduced by Task #5
+
+**New identifiers Task #5 will introduce:** none — entity type registry unchanged by Task #5
+
+**Status:** ✓ Build-start audit complete (Task #5)

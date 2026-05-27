@@ -42,7 +42,7 @@ Controls logging verbosity for the Python backend.
 **Consumers (who reads it)**
 - `src/scanmenow/__init__.py` or `src/scanmenow/cli.py` — configures Python `logging` module at startup
 
-**Status:** ⚠ planned — no code yet (carried forward 3 audits: Tasks #2, #3, #5)
+**Status:** ⚠ **MANDATORY for Task #5** — no code consumer exists anywhere; carried 4 consecutive audits (Tasks #2, #3, #9, #5). cli.py is being modified in Task #5 to add `scanmenow scan` — this is the last natural opportunity. Must be wired at `cli.py` startup before `/finish-build` on Task #5. Do not carry to Task #6+.
 
 ---
 
@@ -209,9 +209,34 @@ Standard GCP authentication env var pointing to a service account JSON key file.
 - 0 shape mismatches
 - Registries match current code diff: ✓ (current code) · ⚠ 2 new vars pre-registered for Task #5
 
-**Soft flags:**
-- `SCANMENOW_LOG_LEVEL` carried 3 consecutive audits without being wired. Recommend either: (a) implement in cli.py startup in the next task that touches cli.py (Task #5 adds `scan` command — natural opportunity), or (b) add a note explicitly deferring it to a later task. Do not carry a 4th time without resolution.
+**Soft flags (previous audit):**
+- `SCANMENOW_LOG_LEVEL` carried 3 consecutive audits without being wired. Recommended: implement in cli.py startup in Task #5.
 
 **Status:** ✓ Audit complete (pre-build plan validation for Task #5)
 
-**Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no environment variables. Registry verified — no changes needed. `SCANMENOW_LOG_LEVEL` now carried 4 consecutive audits — flagged for resolution in Task #5 (next task that touches cli.py).
+**Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no environment variables. Registry verified — no changes needed. `SCANMENOW_LOG_LEVEL` now carried 4 consecutive audits — flagged for mandatory resolution in Task #5.
+
+---
+
+**Build-start audit — 2026-05-27T16:00:00Z (by /cross-boundary-audit — pre-code validation, Task #5 branch)**
+
+**Branch:** task/5-group-d-filesystem-walker-integration (cut from main, Task #3 merged)
+
+**Boundaries checked:** All 8 environment variables — full code scan of src/ and tests/
+
+**Evidence recorded:**
+- 1 entry fully implemented ✓ (`SCANMENOW_DB_PATH` — `storage/db.py:12` — unchanged)
+- 1 entry escalated to **hard mandate** ⚠→🚫 (`SCANMENOW_LOG_LEVEL` — 4th carry; must be wired in Task #5 cli.py startup; see entry above)
+- 2 entries planned Task #5, not yet in code ⚠ (`TESSERACT_CMD`, `LIBREOFFICE_CMD` — `walker/reader.py` does not exist yet)
+- 4 entries planned Task #8, not yet in code ⚠ (`SCANMENOW_BACKEND`, `SCANMENOW_FIRESTORE_PROJECT`, `GOOGLE_APPLICATION_CREDENTIALS` — expected)
+- 0 shape mismatches
+- Registries match current code diff: ✓ (no Task #5 code written yet; all ⚠ entries correctly reflect planned state)
+
+**New identifiers Task #5 will introduce (to verify at post-build audit):**
+- `TESSERACT_CMD` consumed at `src/scanmenow/walker/reader.py` — `_read_image()` and `_read_image_pdf()`
+- `LIBREOFFICE_CMD` consumed at `src/scanmenow/walker/reader.py` — `_read_doc()`
+- `SCANMENOW_LOG_LEVEL` consumed at `src/scanmenow/cli.py` — startup logging configuration (MANDATORY)
+
+**Hard mandate:** `SCANMENOW_LOG_LEVEL` must have a code consumer in `cli.py` before this task's PR is opened. The post-build audit will fail if it remains unwired.
+
+**Status:** ✓ Build-start audit complete (Task #5)

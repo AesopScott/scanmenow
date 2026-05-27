@@ -161,3 +161,24 @@ Age-based retention policy evaluation and enforcement. Queries findings older th
 **Status:** ✓ Audit complete (pre-build plan validation for Task #5) + orchestrator corrections applied
 
 **Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no CLI commands. Registry verified — no changes needed.
+
+---
+
+**Build-start audit — 2026-05-27T16:00:00Z (by /cross-boundary-audit — pre-code validation, Task #5 branch)**
+
+**Branch:** task/5-group-d-filesystem-walker-integration (cut from main, Task #3 merged)
+
+**Boundaries checked:** All CLI commands — `cli.py` full read, `pyproject.toml [project.scripts]`
+
+**Evidence recorded:**
+- `scanmenow` (root): `cli.py:7` `app = typer.Typer(no_args_is_help=True)` + `pyproject.toml [project.scripts]` → `scanmenow = "scanmenow.cli:app"` ✓
+- `scanmenow scan <path>`: absent from `cli.py` ⚠ — pre-registered for Task #5; Task #5 adds `@app.command()` in `cli.py`
+- `scanmenow benchmark`: absent from `cli.py` ⚠ — pre-registered for Task #4; expected
+- `scanmenow retain`: absent from `cli.py` ⚠ — pre-registered for Task #8; expected
+- 0 mismatches on implemented entries
+
+**New identifiers Task #5 will introduce (to verify at post-build audit):**
+- `scanmenow scan <path>` — `cli.py` `@app.command()` Typer subcommand
+- Arguments: `<path>`, `--depth`, `--skip`, `--follow-symlinks`, `--include-hidden`, `--output`, `--format`
+
+**Status:** ✓ Build-start audit complete (Task #5)

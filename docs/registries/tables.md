@@ -117,3 +117,30 @@ One row per detected PII/PHI entity within a scan job.
 **Status:** ✓ Audit complete (pre-build plan validation for Task #5)
 
 **Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no new tables or columns. `findings.entity_type` (TEXT) will automatically store the 8 new PII entity type strings — no schema migration needed. Registry verified — no changes needed.
+
+---
+
+**Build-start audit — 2026-05-27T16:00:00Z (by /cross-boundary-audit — pre-code validation, Task #5 branch)**
+
+**Branch:** task/5-group-d-filesystem-walker-integration (cut from main, Task #3 merged)
+
+**Boundaries checked:** All SQLite tables — full code scan of `src/` and `tests/`
+
+**Evidence recorded:**
+- `scan_jobs`: `db.py:44-50` schema matches registry exactly ✓ — `job_id`, `source_path`, `status`, `created_at`, `completed_at`
+- `findings`: `db.py:52-62` current columns match registry current-schema section exactly ✓ — `finding_id`, `job_id`, `entity_type`, `start`, `end`, `score`, `text_snippet`, `source_file`
+- `CSV_HEADERS` lock order in `repository.py:10` matches documented order exactly ✓
+- `source_line` absent from code ⚠ — pre-registered, expected; Task #5 adds via `ALTER TABLE findings ADD COLUMN source_line INTEGER` in `init_db()`
+- `created_at` (findings) absent from code ⚠ — pre-registered for Task #8, expected
+- `get_overlapping_findings()` absent from `repository.py` ⚠ — pre-registered, expected; Task #5 adds
+- `Finding` dataclass in `models.py:29-39` does not yet have `source_line` field ⚠ — expected; Task #5 adds
+- 0 shape mismatches on implemented entries
+
+**New identifiers Task #5 will introduce (to verify at post-build audit):**
+- `findings.source_line INTEGER` column — `db.py` `init_db()` ALTER TABLE migration
+- `Finding.source_line` field — `models.py`
+- `get_overlapping_findings(job_id, start, end)` — `repository.py`
+- `source_line` in `save_finding()` INSERT — `repository.py`
+- `source_line` added to `CSV_HEADERS` — `repository.py`
+
+**Status:** ✓ Build-start audit complete (Task #5)
