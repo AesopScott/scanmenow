@@ -110,6 +110,23 @@
       "proofUnits": [],
       "branch": null,
       "pr_url": null
+    },
+    {
+      "number": 11,
+      "title": "Build Bi-Temporal Progress Tracking",
+      "description": "Add append-only task history so backlog changes can be queried by both project-effective time and system-recorded time while preserving docs/backlog.json as the current-state projection.",
+      "category": "feature",
+      "priority": 85,
+      "impact": "standard",
+      "status": "backlog",
+      "created_at": "2026-05-27",
+      "completed_at": null,
+      "dependencies": [],
+      "notes": "Process spec: docs/BI-TEMPORAL-PROGRESS-TRACKING.md",
+      "plan": null,
+      "proofUnits": [],
+      "branch": null,
+      "pr_url": null
     }
   ]
 }
