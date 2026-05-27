@@ -2,8 +2,8 @@
   "tasks": [
     {
       "number": 4,
-      "title": "Group C - Synthetic PHI Corpus & Golden Findings",
-      "description": "Build synthetic PHI test corpus covering the 15 unique detectable HIPAA identifier labels (16 HIPAA rows, but phone and fax share PHONE_NUMBER; photos and catch-all are out of scope) with golden findings JSON and a benchmark runner for validation, accuracy benchmarking, and regression-guarding",
+      "title": "Group C - Benchmark Runner & Accuracy Gate",
+      "description": "Build the benchmark runner, reporting surface, and CI accuracy gate that validate ScanMeNow detection against independent PHI/PII testing data. Task C consumes Task D extraction/OCR support, Task G PII capability, and Task H independent testing data.",
       "category": "feature",
       "priority": 98,
       "status": "backlog",
@@ -13,7 +13,11 @@
       "parent": 1,
       "created_at": "2026-05-23",
       "completed_at": null,
-      "dependencies": [],
+      "dependencies": [
+        5,
+        9,
+        10
+      ],
       "plan": null,
       "proofUnits": [],
       "branch": null,
@@ -79,8 +83,8 @@
     },
     {
       "number": 9,
-      "title": "Add PII to scope and capability",
-      "description": "It doesn't look like across the project that PII scanning was in scope, and only PHI scanning is listed. We need you to add pii to the project and build scan capability for it.",
+      "title": "Task G - Add PII to Scope and Capability",
+      "description": "Add PII scanning to the project scope and detection capability alongside PHI scanning. Task G defines the expanded PII entity set that Task C must benchmark and Task H must represent in independent testing data.",
       "category": "feature",
       "priority": 50,
       "impact": "standard",
@@ -88,6 +92,24 @@
       "created_at": "2026-05-27",
       "completed_at": null,
       "dependencies": []
+    },
+    {
+      "number": 10,
+      "title": "Task H - Independent Testing Data for Task C",
+      "description": "Produce the independent synthetic PHI/PII testing corpus, companion extracted text files, golden findings JSON, near-miss decoys, and delivery notes that Task C will consume for validation, accuracy benchmarking, and regression guarding. This task must preserve independence by avoiding ScanMeNow source code, tests, and existing fixtures while authoring the corpus.",
+      "category": "feature",
+      "priority": 98,
+      "impact": "standard",
+      "status": "backlog",
+      "created_at": "2026-05-27",
+      "completed_at": null,
+      "dependencies": [
+        9
+      ],
+      "plan": null,
+      "proofUnits": [],
+      "branch": null,
+      "pr_url": null
     }
   ]
 }
