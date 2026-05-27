@@ -1,4 +1,4 @@
-"""SQLite database initialization and connection management."""
+﻿"""SQLite database initialization and connection management."""
 
 import os
 import sqlite3
@@ -35,6 +35,9 @@ def init_db(db_path: Path | None = None) -> None:
     """
     Create the database schema if it does not already exist.
 
+    Idempotent: safe to call on an existing database. ALTER TABLE migrations
+    are guarded against duplicate-column errors.
+
     Args:
         db_path: Path to the .db file. Uses get_db_path() if not provided.
     """
@@ -50,14 +53,22 @@ def init_db(db_path: Path | None = None) -> None:
             );
 
             CREATE TABLE IF NOT EXISTS findings (
-                finding_id  TEXT PRIMARY KEY,
-                job_id      TEXT NOT NULL REFERENCES scan_jobs(job_id),
-                entity_type TEXT NOT NULL,
-                start       INTEGER NOT NULL,
-                end         INTEGER NOT NULL,
-                score       REAL NOT NULL,
+                finding_id   TEXT PRIMARY KEY,
+                job_id       TEXT NOT NULL REFERENCES scan_jobs(job_id),
+                entity_type  TEXT NOT NULL,
+                start        INTEGER NOT NULL,
+                end          INTEGER NOT NULL,
+                score        REAL NOT NULL,
                 text_snippet TEXT NOT NULL DEFAULT '',
                 source_file  TEXT NOT NULL DEFAULT ''
             );
         """)
+        # Idempotent migrations -- catch OperationalError for duplicate column.
+        for migration in [
+            "ALTER TABLE findings ADD COLUMN created_at TEXT NOT NULL DEFAULT ''",
+        ]:
+            try:
+                conn.execute(migration)
+            except sqlite3.OperationalError:
+                pass  # column already exists
     conn.close()
