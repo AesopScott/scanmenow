@@ -46,7 +46,7 @@
       "category": "feature",
       "priority": 95,
       "status": "backlog",
-      "impact": "standard",
+      "impact": "minor",
       "phase": null,
       "phase_task": null,
       "parent": 1,
