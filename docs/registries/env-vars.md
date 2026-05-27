@@ -42,7 +42,55 @@ Controls logging verbosity for the Python backend.
 **Consumers (who reads it)**
 - `src/scanmenow/__init__.py` or `src/scanmenow/cli.py` — configures Python `logging` module at startup
 
-**Status:** ⚠ planned — no code yet
+**Status:** ⚠ planned — no code yet (carried forward 3 audits: Tasks #2, #3, #5)
+
+---
+
+## `TESSERACT_CMD`
+
+Overrides the Tesseract OCR binary path used by `pytesseract`. Required on Windows where Tesseract is not on `PATH` by default.
+
+**Type:** string (file path)
+**Required:** no — falls back to platform default
+**Default (Windows):** `C:\Program Files\Tesseract-OCR\tesseract.exe`
+**Default (Linux):** resolved from `PATH` (`/usr/bin/tesseract` or equivalent)
+**Example:** `C:\Program Files\Tesseract-OCR\tesseract.exe`
+
+**Producers (who sets it)**
+- Shell / `.env` file — operator sets if Tesseract is installed at a non-default path
+- Future: Electron settings UI or dependency bootstrapper (Task #12)
+
+**Consumers (who reads it)**
+- `src/scanmenow/walker/reader.py` — `_read_image()` and `_read_image_pdf()` set `pytesseract.pytesseract.tesseract_cmd` from this var ⚠ planned Task #5
+
+**Adjacent constraint — Graceful fallback:** If Tesseract binary is not found at the resolved path, `reader.py` logs a `WARNING` and returns `""` for image files rather than raising. Scan continues; image files are counted as skipped.
+
+**Status:** ⚠ planned — Task #5; env var documented pre-build so registry is ready before code lands
+
+---
+
+## `LIBREOFFICE_CMD`
+
+Overrides the LibreOffice headless binary path used for `.doc` legacy file extraction.
+
+**Type:** string (file path)
+**Required:** no — falls back to platform default
+**Default (Windows):** `C:\Program Files\LibreOffice\program\soffice.exe`
+**Default (Linux):** `/usr/bin/soffice` (or resolved from `PATH`)
+**Example:** `/opt/libreoffice7.6/program/soffice`
+
+**Producers (who sets it)**
+- Shell / `.env` file — operator sets if LibreOffice is installed at a non-default path
+- Future: Electron settings UI or dependency bootstrapper (Task #12)
+
+**Consumers (who reads it)**
+- `src/scanmenow/walker/reader.py` — `_read_doc()` resolves LibreOffice binary via this var before running headless subprocess ⚠ planned Task #5
+
+**Adjacent constraint — Graceful fallback:** If LibreOffice binary is not found at the resolved path, `reader.py` logs a `WARNING` and returns `""` for `.doc` files rather than raising. Scan continues; `.doc` files are counted as skipped.
+
+**Adjacent constraint — System dependency:** LibreOffice is a system-level binary, not a pip package. Installation is the responsibility of the end user or the dependency bootstrapper (Task #12). Unlike Python packages, it cannot be installed via `uv add`.
+
+**Status:** ⚠ planned — Task #5; env var documented pre-build so registry is ready before code lands
 
 ---
 
@@ -51,24 +99,26 @@ Controls logging verbosity for the Python backend.
 | Variable | Required | Default | Consumers | Status |
 |----------|----------|---------|-----------|--------|
 | `SCANMENOW_DB_PATH` | no | `~/.scanmenow/scanmenow.db` | storage/db.py | ✓ implemented |
-| `SCANMENOW_LOG_LEVEL` | no | `INFO` | cli.py or __init__.py | ⚠ planned — not yet consumed |
+| `SCANMENOW_LOG_LEVEL` | no | `INFO` | cli.py or __init__.py | ⚠ planned — not yet consumed (3rd carry) |
+| `TESSERACT_CMD` | no | platform-detected | walker/reader.py (planned) | ⚠ planned Task #5 |
+| `LIBREOFFICE_CMD` | no | platform-detected | walker/reader.py (planned) | ⚠ planned Task #5 |
 
 ---
 
 ## Audit Trail — Proof of Registry Verification
 
-**Last audit:** 2026-05-25T00:00:00Z (by /cross-boundary-audit — pre-build plan validation for Task #3)
+**Last audit:** 2026-05-27T00:00:00Z (by /cross-boundary-audit — pre-build plan validation for Task #5)
 
-**Boundaries checked:** Environment variables (re-verified against Task #3 plan — no env var changes planned)
+**Boundaries checked:** Environment variables (verified against Task #5 plan — TESSERACT_CMD and LIBREOFFICE_CMD pre-registered)
 
 **Evidence recorded:**
 - 1 entry fully implemented ✓ (`SCANMENOW_DB_PATH` — unchanged)
-- 1 entry still planned ⚠ (`SCANMENOW_LOG_LEVEL` — not yet consumed; carried forward again)
+- 1 entry still unimplemented ⚠ (`SCANMENOW_LOG_LEVEL` — carried forward 3rd time; no code consumer exists)
+- 2 new entries pre-registered ⚠ (`TESSERACT_CMD`, `LIBREOFFICE_CMD` — planned Task #5, not yet in code)
 - 0 shape mismatches
-- New identifiers introduced on task #3: none — Task #3 adds no env vars
-- Registries match current code diff: ✓ verified
+- Registries match current code diff: ✓ (current code) · ⚠ 2 new vars pre-registered for Task #5
 
 **Soft flags:**
-- `SCANMENOW_LOG_LEVEL` documented but not yet wired — now carried forward twice. Consider scheduling in a near-term task or accepting as permanent documentation-only entry.
+- `SCANMENOW_LOG_LEVEL` carried 3 consecutive audits without being wired. Recommend either: (a) implement in cli.py startup in the next task that touches cli.py (Task #5 adds `scan` command — natural opportunity), or (b) add a note explicitly deferring it to a later task. Do not carry a 4th time without resolution.
 
-**Status:** ✓ Audit complete (pre-build plan validation for Task #3)
+**Status:** ✓ Audit complete (pre-build plan validation for Task #5)
