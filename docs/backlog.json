@@ -140,7 +140,7 @@
       "description": "Firestore connection layer with environment flag for local dev, retention policy evaluation, and cloud integration (4 subtasks)",
       "category": "feature",
       "priority": 96,
-      "status": "backlog",
+      "status": "planned",
       "impact": "standard",
       "phase": null,
       "phase_task": null,
@@ -148,8 +148,78 @@
       "created_at": "2026-05-23",
       "completed_at": null,
       "dependencies": [],
-      "plan": null,
-      "proofUnits": [],
+      "objective": {
+        "statement": "Deliver a Firestore-backed cloud storage layer with a SCANMENOW_BACKEND env flag (sqlite|firestore), an age-based retention policy evaluator, and a `scanmenow retain` CLI subcommand — all independently testable without a live GCP connection.",
+        "successCriteria": [
+          "Repository protocol extracted; SqliteRepository and FirestoreRepository (mocked) both satisfy it; get_repository() routes on SCANMENOW_BACKEND",
+          "FirestoreRepository lazily imports google-cloud-firestore so SQLite mode never requires GCP credentials",
+          "evaluate_retention() dry-run returns RetentionReport with expired_count and zero deleted_count without deleting any findings",
+          "evaluate_retention() live mode deletes only findings older than max_age_days; findings with empty created_at are conservatively kept",
+          "scanmenow retain --max-age-days 90 --dry-run exits 0 and prints a retention report"
+        ],
+        "nonGoals": [
+          "Retention tiers by entity type (SSN=30d, generic=90d) — follow-up backlog task",
+          "Legal holds and approval gates — follow-up backlog task",
+          "Archive to cold storage instead of delete — follow-up backlog task",
+          "Firestore emulator integration tests",
+          "Firestore security rules configuration",
+          "Real-time Firestore listeners or streaming",
+          "Multi-region Firestore setup"
+        ],
+        "proofMap": [
+          {"criterion": "Repository protocol extracted; both repos satisfy it; get_repository() routes on SCANMENOW_BACKEND", "proofUnit": 1},
+          {"criterion": "FirestoreRepository lazily imports google-cloud-firestore so SQLite mode never requires GCP credentials", "proofUnit": 2},
+          {"criterion": "evaluate_retention() dry-run returns RetentionReport without deleting any findings", "proofUnit": 3},
+          {"criterion": "evaluate_retention() live mode deletes only findings older than max_age_days; empty created_at kept", "proofUnit": 4},
+          {"criterion": "scanmenow retain --max-age-days 90 --dry-run exits 0 and prints a retention report", "proofUnit": 5}
+        ],
+        "stopConditions": [
+          "If google-cloud-firestore package cannot be installed as an optional dep without breaking the base install, stop and resolve the packaging approach before proceeding"
+        ]
+      },
+      "plan": "scanmenow_Build/Tasks/Task-8-group-e-cloud-retention-services.md",
+      "proofUnits": [
+        {
+          "number": 1,
+          "title": "Repository protocol compliance and env routing",
+          "expectedBehavior": "Both SqliteRepository and FirestoreRepository (injected mock client) satisfy the Repository protocol at runtime; get_repository('sqlite') returns SqliteRepository; get_repository('firestore') returns FirestoreRepository; default (no env var) returns SqliteRepository",
+          "exactCommand": "uv run pytest tests/test_repository_protocol.py -v",
+          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.storage.base' or test file does not exist",
+          "expectedPassingEvidence": "All protocol compliance and routing tests pass"
+        },
+        {
+          "number": 2,
+          "title": "Firestore client factory and lazy import safety",
+          "expectedBehavior": "get_firestore_client() raises RuntimeError when credentials absent (mocked); FirestoreRepository save/get/delete call correct Firestore collection methods (mock asserts); importing cloud.client does not trigger google.cloud.firestore import in sys.modules",
+          "exactCommand": "uv run pytest tests/test_cloud.py -v",
+          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.cloud' or test file does not exist",
+          "expectedPassingEvidence": "All Firestore client and lazy import tests pass"
+        },
+        {
+          "number": 3,
+          "title": "Retention dry-run returns report without deletion",
+          "expectedBehavior": "evaluate_retention(repo, RetentionPolicy(max_age_days=30, dry_run=True)) returns RetentionReport with expired_count >= 1 and deleted_count == 0; no finding removed from repo",
+          "exactCommand": "uv run pytest tests/test_retention.py::test_dry_run_returns_report_without_deletion -v",
+          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.retention' or test file does not exist",
+          "expectedPassingEvidence": "1 passed — RetentionReport shows expired findings but none deleted"
+        },
+        {
+          "number": 4,
+          "title": "Retention live mode deletes only expired findings",
+          "expectedBehavior": "evaluate_retention with dry_run=False deletes findings older than max_age_days; findings newer than threshold untouched; finding with empty created_at treated as keep (not deleted)",
+          "exactCommand": "uv run pytest tests/test_retention.py -v",
+          "expectedInitialFailure": "ModuleNotFoundError or test file does not exist",
+          "expectedPassingEvidence": "All retention tests pass including age threshold, dry-run, live deletion, and empty created_at safety tests"
+        },
+        {
+          "number": 5,
+          "title": "scanmenow retain CLI end-to-end",
+          "expectedBehavior": "scanmenow retain --max-age-days 90 --dry-run exits 0, prints a retention report showing 0 expired findings (empty DB), no deletions occur",
+          "exactCommand": "uv run scanmenow retain --max-age-days 90 --dry-run",
+          "expectedInitialFailure": "Error: No such command 'retain' (Typer exits with code 2)",
+          "expectedPassingEvidence": "Exit 0, retention report printed with 0 expired findings, no deletion output"
+        }
+      ],
       "branch": null,
       "pr_url": null
     },
