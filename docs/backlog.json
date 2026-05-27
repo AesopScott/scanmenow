@@ -160,11 +160,82 @@
       "category": "feature",
       "priority": 50,
       "impact": "standard",
-      "status": "backlog",
+      "status": "planned",
       "created_at": "2026-05-27",
       "completed_at": null,
       "dependencies": [],
-      "notes": "TASK G BUILD NOTES (orchestrator, 2026-05-27): LOCKED PII LABEL SET — 8 US-focused Presidio built-in types: CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP. International PII (AU, UK, SG, EU) deferred to Task #16. No custom recognizers needed — all 8 are Presidio built-ins. --- PHASE 1 GATE (critical): before writing any code, audit the installed Presidio package to verify exact recognizer class names and entity type strings. Wrong class names cause silent misses — the integration test (engine.get_recognizers()) is the verification gate. --- REQUIRED DELIVERABLES: (1) src/scanmenow/detection/recognizers/pii/__init__.py + us_pii.py — exports ALL_PII_RECOGNIZERS; (2) src/scanmenow/detection/recognizers/__init__.py updated — merges ALL_PII_RECOGNIZERS into ALL_RECOGNIZERS; (3) docs/pii_coverage.json — 8-entry registry mirroring hipaa_coverage.json format: entity_type, Presidio recognizer class, confidence notes, jurisdiction, collision_risk; (4) docs/registries/entity-types.md — 8 new entries following existing format (Task H coverage matrix depends on this being up to date before corpus production starts); (5) tests/test_pii_recognizers.py — positive + negative per type (16 tests min) + integration test confirming all 8 registered. --- COLLISION DOCUMENTATION (required in pii_coverage.json): US_DRIVER_LICENSE may overlap with CERTIFICATE_LICENSE_NUMBER; MEDICAL_LICENSE may overlap with MEDICAL_RECORD_NUMBER. Both are expected and Presidio handles them — document collision_risk field per entity. --- NRP NOTE: Presidio NRP recognizer detects nationality/religion/political group mentions in text (e.g. 'identifies as Catholic', 'US citizen', 'Republican Party member'). It is keyword/phrase detection, not a structured ID format. Document as best-effort in pii_coverage.json. Task C assigns NRP no hard accuracy threshold (same as BIOMETRIC_IDENTIFIER). --- DOWNSTREAM DEPENDENCIES: Task H corpus production is waiting on entity-types.md to be updated before it can finalize its coverage matrix. Task C benchmark thresholds for all 8 PII types are already written in docs/benchmark_thresholds.json — read it for context. --- ARCHITECTURAL DEPENDENCY CONTRACT (2026-05-27): Task G (#9) OWNS Contract 1. All 8 PII recognizers must be registered into build_analyzer() in src/scanmenow/detection/analyzer.py — NOT into a separate factory or alternate entry point. build_analyzer() is the single factory for the AnalyzerEngine. Task C imports build_analyzer() as-is and calls it once per benchmark run; it does not know about PII recognizers specifically. Any recognizer Task G merges into ALL_RECOGNIZERS is automatically benchmarked by Task C on the next run with no code change in Task C. This means Task G must merge into src/scanmenow/detection/recognizers/__init__.py (ALL_RECOGNIZERS list) before Task C's first full benchmark run. Do not expose a separate build_pii_analyzer() or similar — Task C will not call it."
+      "notes": "TASK G BUILD NOTES (orchestrator, 2026-05-27): LOCKED PII LABEL SET — 8 US-focused Presidio built-in types: CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP. International PII (AU, UK, SG, EU) deferred to Task #16. No custom recognizers needed — all 8 are Presidio built-ins. --- PHASE 1 GATE (critical): before writing any code, audit the installed Presidio package to verify exact recognizer class names and entity type strings. Wrong class names cause silent misses — the integration test (engine.get_recognizers()) is the verification gate. --- REQUIRED DELIVERABLES: (1) src/scanmenow/detection/recognizers/pii/__init__.py + us_pii.py — exports ALL_PII_RECOGNIZERS; (2) src/scanmenow/detection/recognizers/__init__.py updated — merges ALL_PII_RECOGNIZERS into ALL_RECOGNIZERS; (3) docs/pii_coverage.json — 8-entry registry mirroring hipaa_coverage.json format: entity_type, Presidio recognizer class, confidence notes, jurisdiction, collision_risk; (4) docs/registries/entity-types.md — 8 new entries following existing format (Task H coverage matrix depends on this being up to date before corpus production starts); (5) tests/test_pii_recognizers.py — positive + negative per type (16 tests min) + integration test confirming all 8 registered. --- COLLISION DOCUMENTATION (required in pii_coverage.json): US_DRIVER_LICENSE may overlap with CERTIFICATE_LICENSE_NUMBER; MEDICAL_LICENSE may overlap with MEDICAL_RECORD_NUMBER. Both are expected and Presidio handles them — document collision_risk field per entity. --- NRP NOTE: Presidio NRP recognizer detects nationality/religion/political group mentions in text (e.g. 'identifies as Catholic', 'US citizen', 'Republican Party member'). It is keyword/phrase detection, not a structured ID format. Document as best-effort in pii_coverage.json. Task C assigns NRP no hard accuracy threshold (same as BIOMETRIC_IDENTIFIER). --- DOWNSTREAM DEPENDENCIES: Task H corpus production is waiting on entity-types.md to be updated before it can finalize its coverage matrix. Task C benchmark thresholds for all 8 PII types are already written in docs/benchmark_thresholds.json — read it for context. --- ARCHITECTURAL DEPENDENCY CONTRACT (2026-05-27): Task G (#9) OWNS Contract 1. All 8 PII recognizers must be registered into build_analyzer() in src/scanmenow/detection/analyzer.py — NOT into a separate factory or alternate entry point. build_analyzer() is the single factory for the AnalyzerEngine. Task C imports build_analyzer() as-is and calls it once per benchmark run; it does not know about PII recognizers specifically. Any recognizer Task G merges into ALL_RECOGNIZERS is automatically benchmarked by Task C on the next run with no code change in Task C. This means Task G must merge into src/scanmenow/detection/recognizers/__init__.py (ALL_RECOGNIZERS list) before Task C's first full benchmark run. Do not expose a separate build_pii_analyzer() or similar — Task C will not call it.",
+      "objective": {
+        "statement": "Deliver 8 US-focused PII entity types (CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP) registered in build_analyzer() alongside existing HIPAA recognizers, with a pii_coverage.json registry, entity-types.md extension, and a passing test suite.",
+        "successCriteria": [
+          "docs/pii_coverage.json documents all 8 US PII entity types with entity_type, presidio_class, jurisdiction, confidence_notes, and collision_risk",
+          "ALL_PII_RECOGNIZERS exported from src/scanmenow/detection/recognizers/pii/us_pii.py and merged into ALL_RECOGNIZERS",
+          "build_analyzer() returns an AnalyzerEngine with all 8 PII entity type strings registered alongside the 7 HIPAA custom recognizers",
+          "tests/test_pii_recognizers.py passes: 8 positive, 8 negative, 1 integration test (17 tests minimum)",
+          "docs/registries/entity-types.md extended with 8 new PII entity type entries"
+        ],
+        "nonGoals": [
+          "International PII entity types — Task #16",
+          "Filesystem walker integration — Task #5",
+          "Custom regex PII recognizers for types not in Presidio built-ins",
+          "End-to-end file scanning validation — Task #4"
+        ],
+        "proofMap": [
+          {"criterion": "docs/pii_coverage.json documents all 8 US PII entity types", "proofUnit": 1},
+          {"criterion": "ALL_PII_RECOGNIZERS exported and merged into ALL_RECOGNIZERS", "proofUnit": 2},
+          {"criterion": "build_analyzer() registers all 8 PII entity type strings", "proofUnit": 2},
+          {"criterion": "tests/test_pii_recognizers.py passes: 8 positive, 8 negative, 1 integration", "proofUnit": 4},
+          {"criterion": "docs/registries/entity-types.md extended with 8 new entries", "proofUnit": 4}
+        ],
+        "stopConditions": [
+          "If any of the 8 target Presidio recognizer classes are absent from the installed Presidio version, stop and resolve the version mismatch before proceeding — do not write us_pii.py with unverified class names"
+        ]
+      },
+      "plan": "## Overview\n\nActivate 8 US-focused PII entity types from Presidio's built-in recognizer library, merging them into the existing build_analyzer() factory that already carries 7 custom HIPAA Safe Harbor recognizers. No custom regex needed — all 8 are Presidio built-ins.\n\n## Phases\n\nPhase 1 — PII Coverage Registry: Audit installed Presidio to confirm class names; produce docs/pii_coverage.json.\nPhase 2 — PII Recognizer Module: Create pii/ sub-package with us_pii.py exporting ALL_PII_RECOGNIZERS; merge into ALL_RECOGNIZERS in recognizers/__init__.py.\nPhase 3 — Tests & Entity Registry: Write tests/test_pii_recognizers.py (positive + negative + integration); extend docs/registries/entity-types.md.\n\n## First Proof Unit\n\nProof Unit 1: docs/pii_coverage.json exists with 8 entries.\nCommand: uv run python -c \"import json, pathlib; d=json.loads(pathlib.Path('docs/pii_coverage.json').read_text()); assert len(d)==8; print(f'OK — {len(d)} PII types documented')\"\nExpected initial failure: FileNotFoundError.",
+      "proofUnits": [
+        {
+          "number": 1,
+          "title": "Coverage registry documents all 8 US PII types",
+          "expectedBehavior": "docs/pii_coverage.json exists with exactly 8 entries documenting entity type, Presidio class, jurisdiction, confidence notes, and collision risk.",
+          "proofType": "smoke-command",
+          "exactCommand": "uv run python -c \"import json, pathlib; d=json.loads(pathlib.Path('docs/pii_coverage.json').read_text()); assert len(d)==8, f'Expected 8, got {len(d)}'; print(f'OK — {len(d)} PII types documented')\"",
+          "expectedInitialFailure": "FileNotFoundError — docs/pii_coverage.json does not exist yet.",
+          "expectedPassingEvidence": "Prints 'OK — 8 PII types documented' and exits 0.",
+          "waiverGuidance": "N/A"
+        },
+        {
+          "number": 2,
+          "title": "All 8 PII recognizers registered in build_analyzer()",
+          "expectedBehavior": "build_analyzer() returns an AnalyzerEngine whose recognizer registry includes all 8 US PII entity type strings.",
+          "proofType": "failing-test",
+          "exactCommand": "uv run pytest tests/test_pii_recognizers.py::test_all_pii_recognizers_registered -v",
+          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.detection.recognizers.pii' or test file does not exist.",
+          "expectedPassingEvidence": "1 passed — all 8 strings (CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP) appear in the recognizer registry.",
+          "waiverGuidance": "N/A"
+        },
+        {
+          "number": 3,
+          "title": "Positive detection tests pass for all 8 PII types",
+          "expectedBehavior": "Each of the 8 PII entity types detects its target sample text with at least one RecognizerResult returned.",
+          "proofType": "failing-test",
+          "exactCommand": "uv run pytest tests/test_pii_recognizers.py -k \"positive\" -v",
+          "expectedInitialFailure": "ModuleNotFoundError or test file does not exist — 0 tests collected.",
+          "expectedPassingEvidence": "8 passed — one positive assertion per entity type.",
+          "waiverGuidance": "N/A"
+        },
+        {
+          "number": 4,
+          "title": "Full PII test suite passes",
+          "expectedBehavior": "All PII recognizer tests pass — positive detections succeed, negative fixtures produce no false positives, integration test confirms all 8 types are active.",
+          "proofType": "failing-test",
+          "exactCommand": "uv run pytest tests/test_pii_recognizers.py -v",
+          "expectedInitialFailure": "Multiple failures — recognizer modules and tests do not exist.",
+          "expectedPassingEvidence": "17+ tests passed — 8 positive, 8 negative, 1 integration. No failures or errors.",
+          "waiverGuidance": "N/A"
+        }
+      ],
+      "branch": null,
+      "pr_url": null
     },
     {
       "number": 10,
