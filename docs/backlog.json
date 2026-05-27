@@ -106,6 +106,7 @@
       "dependencies": [
         9
       ],
+      "notes": "PII ENTITY LABEL SET (from Task G, 2026-05-27): Task H corpus must include representative examples for all 8 US PII entity types activated by Task G: CREDIT_CARD (Luhn-validated card numbers), US_BANK_NUMBER (US routing/account numbers), US_PASSPORT (US passport numbers), US_DRIVER_LICENSE (US state driver's license numbers), IBAN_CODE (SWIFT/IBAN format bank account numbers), CRYPTO (cryptocurrency wallet addresses — Bitcoin, Ethereum, etc.), MEDICAL_LICENSE (medical license and NPI numbers), NRP (nationality/religion/political group mentions). These supplement the 15 PHI HIPAA Safe Harbor entity types already in scope. Corpus must include at least 2 positive examples and 1 near-miss decoy per PII entity type across the document set.",
       "plan": null,
       "proofUnits": [],
       "branch": null,
