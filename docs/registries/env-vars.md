@@ -118,6 +118,69 @@ Path to the independent benchmark corpus directory produced by Task H.
 
 ---
 
+## `SCANMENOW_BACKEND`
+
+Selects the storage backend — SQLite (local, default) or Firestore (cloud).
+
+**Type:** string (`sqlite` | `firestore`)
+**Required:** no
+**Default:** `sqlite`
+**Example:** `firestore` (for cloud deployment)
+
+**Producers (who sets it)**
+- Shell / `.env` file — operator sets for cloud deployment
+- Future: Electron settings UI
+
+**Consumers (who reads it)**
+- `src/scanmenow/storage/base.py` — `get_repository()` factory routes on this value ⚠ planned Task #8
+
+**Adjacent constraint — Lazy Firestore import:** `FirestoreRepository` (and `google-cloud-firestore`) must not be imported unless `SCANMENOW_BACKEND=firestore`. SQLite mode must work with no GCP credentials and without the Firestore package installed.
+
+**Status:** ⚠ planned — Task #8; env var documented pre-build
+
+---
+
+## `SCANMENOW_FIRESTORE_PROJECT`
+
+GCP project ID used when the Firestore backend is active.
+
+**Type:** string (GCP project ID)
+**Required:** yes if `SCANMENOW_BACKEND=firestore`; ignored otherwise
+**Default:** none
+**Example:** `my-gcp-project-12345`
+
+**Producers (who sets it)**
+- Shell / `.env` file — operator sets for cloud deployment
+- CI pipeline sets for integration testing
+
+**Consumers (who reads it)**
+- `src/scanmenow/cloud/client.py` — `get_firestore_client()` reads this to initialize the Firestore client ⚠ planned Task #8
+- Raises `RuntimeError` with actionable message if missing when Firestore backend is requested
+
+**Status:** ⚠ planned — Task #8; env var documented pre-build
+
+---
+
+## `GOOGLE_APPLICATION_CREDENTIALS`
+
+Standard GCP authentication env var pointing to a service account JSON key file.
+
+**Type:** string (file path)
+**Required:** yes for production Firestore; not required in dev if using `gcloud auth application-default login`
+**Default:** GCP SDK default credential resolution
+**Example:** `/secrets/gcp-sa.json`
+
+**Producers (who sets it)**
+- Shell / CI pipeline — standard GCP authentication setup
+- This is a GCP-standard variable, not ScanMeNow-specific
+
+**Consumers (who reads it)**
+- `src/scanmenow/cloud/client.py` — `google-cloud-firestore` SDK reads this automatically ⚠ planned Task #8
+
+**Status:** ⚠ planned — Task #8; standard GCP variable, not set or owned by ScanMeNow directly
+
+---
+
 ## Summary
 
 | Variable | Required | Default | Consumers | Status |
@@ -127,6 +190,9 @@ Path to the independent benchmark corpus directory produced by Task H.
 | `TESSERACT_CMD` | no | platform-detected | walker/reader.py (planned) | ⚠ planned Task #5 |
 | `LIBREOFFICE_CMD` | no | platform-detected | walker/reader.py (planned) | ⚠ planned Task #5 |
 | `SCANMENOW_CORPUS_PATH` | no | none (skips gracefully) | benchmark/runner.py (planned) | ⚠ planned Task #4 |
+| `SCANMENOW_BACKEND` | no | `sqlite` | storage/base.py (planned) | ⚠ planned Task #8 |
+| `SCANMENOW_FIRESTORE_PROJECT` | no | none (required if backend=firestore) | cloud/client.py (planned) | ⚠ planned Task #8 |
+| `GOOGLE_APPLICATION_CREDENTIALS` | no | GCP default | cloud/client.py (planned) | ⚠ planned Task #8 (GCP standard var) |
 
 ---
 

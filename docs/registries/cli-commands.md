@@ -95,6 +95,30 @@ Run the benchmark accuracy gate against an independent corpus. Reads golden find
 
 ---
 
+## `scanmenow retain` ⚠ planned (Task #8)
+
+Age-based retention policy evaluation and enforcement. Queries findings older than a threshold and either reports them (dry-run) or deletes them (live mode).
+
+**Arguments / options:**
+- `--max-age-days N` — findings older than N days are considered expired (default: 90)
+- `--dry-run` — report expired findings without deleting (default)
+- `--confirm` — delete expired findings after printing count and warning
+
+**Declaration (producer)**
+- `src/scanmenow/cli.py` — `@app.command()` Typer subcommand ⚠ planned Task #8
+
+**Implementation (producer)**
+- `src/scanmenow/retention/evaluator.py` — `evaluate_retention()` ⚠ planned Task #8
+- `src/scanmenow/retention/policy.py` — `RetentionPolicy`, `RetentionReport` ⚠ planned Task #8
+- `src/scanmenow/storage/base.py` — `get_repository()` factory ⚠ planned Task #8
+
+**Consumers**
+- `tests/test_retention.py` ⚠ planned Task #8
+
+**Status:** ⚠ planned — Task #8; not yet implemented
+
+---
+
 ## Future subcommands (post-Task #5)
 
 | Command | Planned in | Description |
@@ -111,6 +135,7 @@ Run the benchmark accuracy gate against an independent corpus. Reads golden find
 | `scanmenow` (root) | pyproject.toml | cli.py | ✓ implemented |
 | `scanmenow scan <path>` | cli.py (planned) | scanner.py, walker/ (planned) | ⚠ planned Task #5 |
 | `scanmenow benchmark` | cli.py (planned) | benchmark/runner.py (planned) | ⚠ planned Task #4 |
+| `scanmenow retain` | cli.py (planned) | retention/evaluator.py (planned) | ⚠ planned Task #8 |
 | `scanmenow reduce` | — | — | ⚠ placeholder — Phase 2 |
 
 ---

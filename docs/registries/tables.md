@@ -49,6 +49,7 @@ One row per detected PII/PHI entity within a scan job.
 | `text_snippet` | TEXT | Safe evidence — redacted by default |
 | `source_file` | TEXT | File where entity was found |
 | `source_line` | INTEGER | ⚠ planned (Task #5) — line number within `source_file` where the entity was found. Added via `ALTER TABLE findings ADD COLUMN source_line INTEGER` in `init_db()`. Nullable — NULL for pre-Task #5 findings and formats where line tracking is not meaningful. |
+| `created_at` | TEXT (ISO 8601) | ⚠ planned (Task #8) — timestamp when the finding was saved. Added via `ALTER TABLE findings ADD COLUMN created_at TEXT NOT NULL DEFAULT ''` in `init_db()` (idempotent — catches `OperationalError` for duplicate column). Required by retention evaluator for age-based policy enforcement. Empty string is treated as "keep" by the evaluator (conservative). |
 
 **Producers**
 - `src/scanmenow/storage/db.py` — `init_db()` creates the table schema; Task #5 adds migration for `source_line`
@@ -88,7 +89,7 @@ One row per detected PII/PHI entity within a scan job.
 | Table | Producers | Consumers | Status |
 |-------|-----------|-----------|--------|
 | `scan_jobs` | db.py, repository.py | repository.py, test_storage.py | ✓ implemented |
-| `findings` | db.py, repository.py | repository.py, test_storage.py, test_span_collision.py (planned) | ✓ implemented · `source_line` ⚠ planned Task #5 |
+| `findings` | db.py, repository.py | repository.py, test_storage.py, test_span_collision.py (planned) | ✓ implemented · `source_line` ⚠ Task #5 · `created_at` ⚠ Task #8 |
 | `evidence` | repository.py (via text_snippet) | repository.py | ✓ collapsed into findings.text_snippet |
 
 ---
