@@ -1,581 +1,605 @@
-{
-  "tasks": [
-    {
-      "number": 4,
-      "title": "Group C - Benchmark Runner & Accuracy Gate",
-      "description": "Build the benchmark runner, reporting surface, and CI accuracy gate that validate ScanMeNow detection against independent PHI/PII testing data. Task C consumes Task D extraction/OCR support, Task G PII capability, and Task H independent testing data.",
-      "category": "feature",
-      "priority": 98,
-      "status": "planned",
-      "impact": "standard",
-      "phase": null,
-      "phase_task": null,
-      "parent": 1,
-      "created_at": "2026-05-23",
-      "completed_at": null,
-      "dependencies": [
-        5,
-        9,
-        10
-      ],
-      "notes": "PII THRESHOLD POLICY (2026-05-27): Task C must define separate benchmark thresholds for each PII entity label instead of reusing PHI/HIPAA thresholds wholesale. Task G defines the activated PII label set, including CRYPTO and NRP; Task H supplies corpus coverage. Task C owns per-label PII recall/precision thresholds and should document any labels with no hard threshold or best-effort treatment. Thresholds are now written \u00e2\u20ac\u201d read docs/benchmark_thresholds.json, which is the authoritative source the runner enforces. --- ARCHITECTURE NOTES (orchestrator, 2026-05-27): (1) EXTRACTION STACK: Task C's runner.py must import Task D's extraction stack directly (src/scanmenow/walker/reader.py) \u00e2\u20ac\u201d do not duplicate extraction logic. Same code path = same extracted text = same offsets as corpus. (2) PDF LIBRARY: pdfplumber is authoritative for text-layer PDF extraction across the whole project. Task D uses it, Task H corpus was produced with it, Task C must inherit it via the shared reader. (3) CORPUS PATH: SCANMENOW_CORPUS_PATH env var sets corpus location; --corpus CLI arg overrides; pytest gate skips gracefully if env var unset (do not fail CI on missing corpus). (4) TOLERANCE: exact char offset match for text-native formats; \u00c2\u00b15 char tolerance for OCR-derived formats (PNG/JPG/TIFF/BMP/scanned PDF). --- ARCHITECTURAL DEPENDENCY CONTRACTS (2026-05-27): Task C is a CONSUMER of three cross-task contracts. CONTRACT 1 \u00e2\u20ac\u201d build_analyzer() [Owner: Task #3 + Task G (#9)]: import build_analyzer() from src/scanmenow/detection/analyzer.py and call it once per benchmark run. Do NOT re-register recognizers inside runner.py. Task G (#9) will have already merged all 8 PII recognizers into this factory before Task C runs; they appear automatically. CONTRACT 2 \u00e2\u20ac\u201d read_file_text(path) [Owner: Task D (#5)]: import read_file_text(path: Path) -> str from src/scanmenow/walker/reader.py and use it for all corpus text extraction in the benchmark runner. Do NOT duplicate any format-handling logic \u00e2\u20ac\u201d this is the hard coupling that keeps corpus golden-finding offsets consistent with production scanning offsets. CONTRACT 3 \u00e2\u20ac\u201d docs/benchmark_thresholds.json [Owner: Task C (#4), this task]: the runner reads this file at startup; no thresholds are hardcoded in runner.py. Adding a new entity type means adding a row to the JSON; the runner picks it up with no code change. min_recall: null + hard_threshold: false = best-effort, reported only, never fails CI.",
-      "objective": {
-        "statement": "Deliver a benchmark runner that loads an independent corpus, extracts text through Task D's shared reader, analyzes text through build_analyzer(), compares analyzer spans against golden findings and decoys, applies per-entity thresholds from docs/benchmark_thresholds.json, and exposes both a CLI command and pytest gate.",
-        "successCriteria": [
-          "Threshold loader reads docs/benchmark_thresholds.json and supports hard-threshold and report-only labels",
-          "Span matcher supports exact text-native matching, +/-5 OCR tolerance, and decoy-aware false-positive accounting",
-          "Runner imports shared read_file_text(path) and build_analyzer() contracts instead of duplicating extraction or recognizer registration",
-          "scanmenow benchmark --corpus <path> [--output report.json] prints a terminal report and optionally writes JSON",
-          "tests/test_benchmark.py skips gracefully when corpus is absent and enforces configured hard thresholds when corpus is present"
-        ],
-        "nonGoals": [
-          "Producing the independent corpus, golden findings, or extracted text companions - Task H",
-          "Implementing file extraction, OCR, or format readers - Task D",
-          "Registering PHI/PII recognizers - Task G and prior HIPAA recognizer work",
-          "Installing Tesseract or LibreOffice - Task #12",
-          "Redaction, reduction, migration, retention, or UI work"
-        ],
-        "proofMap": [
-          {
-            "criterion": "Threshold loader reads docs/benchmark_thresholds.json and supports hard-threshold and report-only labels",
-            "proofUnit": 1
-          },
-          {
-            "criterion": "Span matcher supports exact text-native matching, +/-5 OCR tolerance, and decoy-aware false-positive accounting",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "Runner imports shared read_file_text(path) and build_analyzer() contracts instead of duplicating extraction or recognizer registration",
-            "proofUnit": 3
-          },
-          {
-            "criterion": "scanmenow benchmark --corpus <path> [--output report.json] prints a terminal report and optionally writes JSON",
-            "proofUnit": 4
-          },
-          {
-            "criterion": "tests/test_benchmark.py skips gracefully when corpus is absent and enforces configured hard thresholds when corpus is present",
-            "proofUnit": 5
-          }
-        ],
-        "stopConditions": [
-          "docs/benchmark_thresholds.json is missing or invalid",
-          "Task D does not expose read_file_text(path)",
-          "Task G has not registered PII recognizers into build_analyzer() before full corpus benchmarking",
-          "Task H corpus format diverges from docs/GROUP-C-CORPUS-SPEC.md"
-        ]
-      },
-      "plan": "scanmenow_Build/Tasks/Task-4-group-c-benchmark-runner-accuracy-gate.md",
-      "proofUnits": [
-        {
-          "number": 1,
-          "title": "Threshold registry loading",
-          "expectedBehavior": "Threshold registry loads all labels from docs/benchmark_thresholds.json; hard-threshold and report-only labels are represented correctly.",
-          "proofType": "failing-test",
-          "exactCommand": "uv run pytest tests/test_benchmark.py::test_threshold_registry_loads -v",
-          "expectedInitialFailure": "ModuleNotFoundError or test file does not exist",
-          "expectedPassingEvidence": "1 passed - threshold registry loads and distinguishes hard-threshold from report-only labels"
-        },
-        {
-          "number": 2,
-          "title": "Span matching and decoy accounting",
-          "expectedBehavior": "Exact spans match, OCR tolerance matches within +/-5 characters, out-of-tolerance spans miss, and decoy hits are tracked separately from uncontrolled false positives.",
-          "proofType": "failing-test",
-          "exactCommand": "uv run pytest tests/test_benchmark.py::test_span_matching_exact_tolerance_and_decoys -v",
-          "expectedInitialFailure": "Matching function does not exist",
-          "expectedPassingEvidence": "1 passed - exact matching, OCR tolerance, misses, and decoy accounting behave as specified"
-        },
-        {
-          "number": 3,
-          "title": "Runner uses shared reader and analyzer contracts",
-          "expectedBehavior": "Runner uses the shared read_file_text(path) extraction path and build_analyzer() analyzer factory while processing a mini corpus into per-entity metrics.",
-          "proofType": "failing-test",
-          "exactCommand": "uv run pytest tests/test_benchmark.py::test_runner_uses_shared_reader_and_analyzer -v",
-          "expectedInitialFailure": "Runner module does not exist",
-          "expectedPassingEvidence": "1 passed - runner processes a mini corpus through the shared contracts"
-        },
-        {
-          "number": 4,
-          "title": "Benchmark CLI outputs table and JSON",
-          "expectedBehavior": "scanmenow benchmark exits 0 against a mini corpus, prints a summary table, and writes JSON when --output is supplied.",
-          "proofType": "failing-test",
-          "exactCommand": "uv run pytest tests/test_benchmark.py::test_benchmark_cli_outputs_table_and_json -v",
-          "expectedInitialFailure": "No benchmark command exists",
-          "expectedPassingEvidence": "1 passed - CLI prints table output and writes JSON report"
-        },
-        {
-          "number": 5,
-          "title": "Pytest benchmark gate behavior",
-          "expectedBehavior": "Benchmark tests pass; corpus-dependent gate skips when corpus path is absent and enforces thresholds when a configured corpus is present.",
-          "proofType": "failing-test",
-          "exactCommand": "uv run pytest tests/test_benchmark.py -v",
-          "expectedInitialFailure": "Benchmark tests or implementation missing",
-          "expectedPassingEvidence": "All benchmark tests pass, including skip and threshold-enforcement behavior"
-        }
-      ],
-      "branch": null,
-      "pr_url": null
-    },
-    {
-      "number": 5,
-      "title": "Group D - Filesystem Walker & Integration",
-      "description": "Local filesystem walker with path resolution, skip patterns, symlink policy, max-depth limits, and end-to-end CLI integration. File format scope: TXT, CSV, JSON, PDF (pdfplumber), DOCX/XLSX/PPTX (python-docx/openpyxl/python-pptx), legacy DOC (LibreOffice headless subprocess), PNG/JPG/JPEG/TIFF/BMP/GIF (pytesseract + Tesseract OCR). System dependencies: Tesseract OCR, LibreOffice. Platform scope: Windows and Linux.",
-      "category": "feature",
-      "priority": 97,
-      "status": "build-started",
-      "impact": "standard",
-      "phase": null,
-      "phase_task": null,
-      "parent": 1,
-      "created_at": "2026-05-23",
-      "completed_at": null,
-      "dependencies": [],
-      "branch": null,
-      "notes": "Hardening concern carried from Task #3 dual review (Claude Sonnet 4.6 + Codex GPT-5, 2026-05-26): when the filesystem walker pipes findings through the detection layer, expand the recognizer collision tests from 'at least one entity fires' into expected entity/span precedence behaviour. A numeric token can match MEDICAL_RECORD_NUMBER, ACCOUNT_NUMBER, and DEVICE_IDENTIFIER simultaneously; if downstream redaction or reporting logic needs deterministic entity precedence over overlapping PHI spans, that dedup/priority contract must be defined and tested here rather than left implicit. OCR SCOPE ADDITION (2026-05-27): Task D now includes OCR capability for image-format files (PNG, JPG, JPEG, GIF) via Tesseract (pytesseract), and legacy .doc files via LibreOffice headless subprocess (cross-platform, no extra pip package). LibreOffice is a system dependency like Tesseract; absence triggers WARNING + skip rather than crash. Linux testing will be performed on WSL. INSTALLER NOTE: Task #12 (Dependency Bootstrapper) owns auto-detection and installation of Tesseract and LibreOffice for end users. --- ORCHESTRATOR CORRECTIONS (2026-05-27, cross-session sync from Task C/H planning): (1) PDF LIBRARY CORRECTION: use pdfplumber (not pdfminer.six) for text-layer PDF extraction. Task H corpus will generate .extracted.txt companions for text PDFs using pdfplumber per docs/GROUP-C-CORPUS-SPEC.md \u00e2\u20ac\u201d if Task D uses pdfminer.six instead, extracted text will differ and all text-layer PDF corpus offsets will drift in the benchmark. Update reader.py to use pdfplumber, page-by-page extraction joined with newline. (2) IMAGE FORMAT GAP: add .tiff/.tif and .bmp to SUPPORTED_EXTENSIONS and reader format handlers. The Task H corpus spec (docs/GROUP-C-CORPUS-SPEC.md, correction #4 in Task H backlog notes commit 5e680077) requires doc_013_lab_result_scan.tiff and doc_014_consent_form_scan.bmp \u00e2\u20ac\u201d these files will be in corpus/ and must be scannable. Both use the same pytesseract extraction path as PNG/JPG. Without them, two corpus documents produce zero findings and Task C benchmark shows 100% false-negative rate for all entity types in those files. --- ARCHITECTURAL DEPENDENCY CONTRACT (2026-05-27): Task D (#5) OWNS Contract 2. Task D must expose read_file_text(path: Path) -> str as a stable public function at src/scanmenow/walker/reader.py. Task C (benchmark runner) imports this function directly \u00e2\u20ac\u201d it does not duplicate format-handling logic. Interface contract: returns extracted plain text (str); returns empty string + logs WARNING on graceful skip (missing Tesseract, missing LibreOffice); raises on unrecoverable errors. This is the hard coupling that keeps corpus golden-finding offsets consistent with production scanning offsets \u00e2\u20ac\u201d any drift between Task D's extraction and Task C's extraction invalidates benchmark accuracy numbers in both directions. The extraction libraries and commands specified in docs/GROUP-C-CORPUS-SPEC.md are authoritative for this function.",
-      "objective": {
-        "statement": "Deliver a working filesystem walker that scans all supported file formats (TXT, CSV, JSON, PDF, DOCX, XLSX, PPTX, DOC, PNG, JPG, JPEG, TIFF, BMP, GIF) for PHI/PII, stores structured findings in SQLite with source_line provenance, and exposes `scanmenow scan <path>` as a working CLI command on Windows and Linux.",
-        "successCriteria": [
-          "All 10 file format readers extract non-empty text from fixture files and pass unit tests",
-          "FileSystemWalker correctly applies skip patterns, max-depth, and symlink skip policy as verified by unit tests",
-          "Span collision test asserts \u00e2\u2030\u00a52 distinct entity types on overlapping spans; get_overlapping_findings() returns all",
-          "run_scan() persists findings in SQLite with source_line populated for text-based formats",
-          "scanmenow scan <path> CLI command exits 0, prints summary, and persists findings for a multi-format fixture directory"
-        ],
-        "nonGoals": [
-          "Dependency bootstrapper or auto-install of Tesseract/LibreOffice for end users (Task #12)",
-          "Windows/Linux/VMware installers (Tasks #13-15)",
-          "Legacy .xls, .xlsb, .ppt binary formats",
-          "Streaming or chunked scanning for files >100MB",
-          "Cloud storage scanning (Task #8)",
-          "Reduction or redaction pipeline",
-          "Electron UI integration"
-        ],
-        "proofMap": [
-          {
-            "criterion": "All 10 file format readers extract non-empty text from fixture files and pass unit tests",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "FileSystemWalker correctly applies skip patterns, max-depth, and symlink skip policy as verified by unit tests",
-            "proofUnit": 1
-          },
-          {
-            "criterion": "Span collision test asserts \u00e2\u2030\u00a52 distinct entity types on overlapping spans; get_overlapping_findings() returns all",
-            "proofUnit": 3
-          },
-          {
-            "criterion": "run_scan() persists findings in SQLite with source_line populated for text-based formats",
-            "proofUnit": 4
-          },
-          {
-            "criterion": "scanmenow scan <path> CLI command exits 0, prints summary, and persists findings for a multi-format fixture directory",
-            "proofUnit": 5
-          }
-        ],
-        "stopConditions": [
-          "Task #3 (HIPAA recognizers) is not yet merged to main \u00e2\u20ac\u201d Task #5 branch must be based on task/3 branch or wait for merge before build can start",
-          "LibreOffice not installed on build machine \u00e2\u20ac\u201d .doc tests must be mocked or skipped; document clearly in test"
-        ]
-      },
-      "proofUnits": [
-        {
-          "number": 1,
-          "title": "Walker unit tests pass",
-          "expectedBehavior": "FileSystemWalker correctly applies skip patterns, max-depth, symlink skip, and hidden file policy across all configured test scenarios",
-          "exactCommand": "uv run pytest tests/test_walker.py -v",
-          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.walker' or test file does not exist",
-          "expectedPassingEvidence": "All walker tests pass \u00e2\u20ac\u201d at minimum: skip pattern, max depth, symlink skip, hidden file, path resolution, unsupported extension tests green"
-        },
-        {
-          "number": 2,
-          "title": "Reader unit tests pass (all formats)",
-          "expectedBehavior": "read_file_text() returns non-empty text for each supported format fixture; graceful skip (empty string + WARNING) when Tesseract or LibreOffice absent",
-          "exactCommand": "uv run pytest tests/test_reader.py -v",
-          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.walker.reader' or test file does not exist",
-          "expectedPassingEvidence": "All reader tests pass including graceful-skip mock tests for missing Tesseract/LibreOffice"
-        },
-        {
-          "number": 3,
-          "title": "Span collision contract tests",
-          "expectedBehavior": "A numeric token prefixed with MRN, account, and serial context keywords produces \u00e2\u2030\u00a52 distinct entity_type findings with overlapping spans; get_overlapping_findings() returns all of them",
-          "exactCommand": "uv run pytest tests/test_span_collision.py -v",
-          "expectedInitialFailure": "test file does not exist",
-          "expectedPassingEvidence": "test_overlapping_entities_all_saved and test_get_overlapping_findings_returns_all pass; hardening contract comment present in test source"
-        },
-        {
-          "number": 4,
-          "title": "Integration scan test \u00e2\u20ac\u201d fixture directory to SQLite findings",
-          "expectedBehavior": "run_scan() on the tests/fixtures/ directory produces a ScanSummary with files_scanned >= 3, persists findings in SQLite, source_line is populated for text-based format findings, source_file is set",
-          "exactCommand": "uv run pytest tests/test_scanner.py -v",
-          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.scanner' or test file does not exist",
-          "expectedPassingEvidence": "All scanner integration tests pass; findings retrievable from SQLite after scan"
-        },
-        {
-          "number": 5,
-          "title": "CLI scan command end-to-end",
-          "expectedBehavior": "scanmenow scan ./tests/fixtures/ exits 0, prints a summary table with files scanned and findings count, and a ScanJob record exists in SQLite after the run",
-          "exactCommand": "uv run scanmenow scan ./tests/fixtures/ --depth 2",
-          "expectedInitialFailure": "Error: No such command 'scan' (Typer exits with code 2)",
-          "expectedPassingEvidence": "Exit 0, summary output visible in terminal, job_id printed, findings retrievable from DB"
-        }
-      ],
-      "plan": "scanmenow_Build/Tasks/Task-5-group-d-filesystem-walker-integration.md",
-      "pr_url": null
-    },
-    {
-      "number": 7,
-      "title": "Group F - Phase 1 Exit Gate & Verification",
-      "description": "Accuracy threshold validation, CLI functional tests on real fixture directory, documentation, and Phase 1 completion (1 subtask)",
-      "category": "feature",
-      "priority": 95,
-      "status": "backlog",
-      "impact": "standard",
-      "phase": null,
-      "phase_task": null,
-      "parent": 1,
-      "created_at": "2026-05-23",
-      "completed_at": null,
-      "dependencies": [],
-      "plan": null,
-      "proofUnits": [],
-      "branch": null,
-      "pr_url": null
-    },
-    {
-      "number": 8,
-      "title": "Group E - Cloud & Retention Services",
-      "description": "Firestore connection layer with environment flag for local dev, retention policy evaluation, and cloud integration (4 subtasks)",
-      "category": "feature",
-      "priority": 96,
-      "status": "build-started",
-      "impact": "standard",
-      "phase": null,
-      "phase_task": null,
-      "parent": 1,
-      "created_at": "2026-05-23",
-      "completed_at": null,
-      "dependencies": [
-        5
-      ],
-      "notes": "STORAGE LAYER DEPENDENCY (orchestrator, 2026-05-27): Task #8 refactors storage into a Repository(Protocol) + SqliteRepository class (storage/base.py). Task #5 extends the same storage module: adds findings.source_line via ALTER TABLE and adds get_overlapping_findings() to repository. If Task #8 builds before Task #5, SqliteRepository will be created without wrapping get_overlapping_findings(), leaving the Repository protocol incomplete. Task #5 must land first (priority 97 > 96 already enforces order), OR Task #8 must include get_overlapping_findings() in the Repository protocol and SqliteRepository on the assumption that Task #5 adds it. Dependency [5] added to enforce correct build order. --- Also note: Task #8 adds findings.created_at column via ALTER TABLE; Task #5 adds findings.source_line via ALTER TABLE. Both are idempotent. The order does not matter for the migrations themselves, only for the Repository class wrapper.",
-      "objective": {
-        "statement": "Deliver a Firestore-backed cloud storage layer with a SCANMENOW_BACKEND env flag (sqlite|firestore), an age-based retention policy evaluator, and a `scanmenow retain` CLI subcommand \u00e2\u20ac\u201d all independently testable without a live GCP connection.",
-        "successCriteria": [
-          "Repository protocol extracted; SqliteRepository and FirestoreRepository (mocked) both satisfy it; get_repository() routes on SCANMENOW_BACKEND",
-          "FirestoreRepository lazily imports google-cloud-firestore so SQLite mode never requires GCP credentials",
-          "evaluate_retention() dry-run returns RetentionReport with expired_count and zero deleted_count without deleting any findings",
-          "evaluate_retention() live mode deletes only findings older than max_age_days; findings with empty created_at are conservatively kept",
-          "scanmenow retain --max-age-days 90 --dry-run exits 0 and prints a retention report"
-        ],
-        "nonGoals": [
-          "Retention tiers by entity type (SSN=30d, generic=90d) \u00e2\u20ac\u201d follow-up backlog task",
-          "Legal holds and approval gates \u00e2\u20ac\u201d follow-up backlog task",
-          "Archive to cold storage instead of delete \u00e2\u20ac\u201d follow-up backlog task",
-          "Firestore emulator integration tests",
-          "Firestore security rules configuration",
-          "Real-time Firestore listeners or streaming",
-          "Multi-region Firestore setup"
-        ],
-        "proofMap": [
-          {
-            "criterion": "Repository protocol extracted; both repos satisfy it; get_repository() routes on SCANMENOW_BACKEND",
-            "proofUnit": 1
-          },
-          {
-            "criterion": "FirestoreRepository lazily imports google-cloud-firestore so SQLite mode never requires GCP credentials",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "evaluate_retention() dry-run returns RetentionReport without deleting any findings",
-            "proofUnit": 3
-          },
-          {
-            "criterion": "evaluate_retention() live mode deletes only findings older than max_age_days; empty created_at kept",
-            "proofUnit": 4
-          },
-          {
-            "criterion": "scanmenow retain --max-age-days 90 --dry-run exits 0 and prints a retention report",
-            "proofUnit": 5
-          }
-        ],
-        "stopConditions": [
-          "If google-cloud-firestore package cannot be installed as an optional dep without breaking the base install, stop and resolve the packaging approach before proceeding"
-        ]
-      },
-      "plan": "scanmenow_Build/Tasks/Task-8-group-e-cloud-retention-services.md",
-      "proofUnits": [
-        {
-          "number": 1,
-          "title": "Repository protocol compliance and env routing",
-          "expectedBehavior": "Both SqliteRepository and FirestoreRepository (injected mock client) satisfy the Repository protocol at runtime; get_repository('sqlite') returns SqliteRepository; get_repository('firestore') returns FirestoreRepository; default (no env var) returns SqliteRepository",
-          "exactCommand": "uv run pytest tests/test_repository_protocol.py -v",
-          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.storage.base' or test file does not exist",
-          "expectedPassingEvidence": "All protocol compliance and routing tests pass"
-        },
-        {
-          "number": 2,
-          "title": "Firestore client factory and lazy import safety",
-          "expectedBehavior": "get_firestore_client() raises RuntimeError when credentials absent (mocked); FirestoreRepository save/get/delete call correct Firestore collection methods (mock asserts); importing cloud.client does not trigger google.cloud.firestore import in sys.modules",
-          "exactCommand": "uv run pytest tests/test_cloud.py -v",
-          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.cloud' or test file does not exist",
-          "expectedPassingEvidence": "All Firestore client and lazy import tests pass"
-        },
-        {
-          "number": 3,
-          "title": "Retention dry-run returns report without deletion",
-          "expectedBehavior": "evaluate_retention(repo, RetentionPolicy(max_age_days=30, dry_run=True)) returns RetentionReport with expired_count >= 1 and deleted_count == 0; no finding removed from repo",
-          "exactCommand": "uv run pytest tests/test_retention.py::test_dry_run_returns_report_without_deletion -v",
-          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.retention' or test file does not exist",
-          "expectedPassingEvidence": "1 passed \u00e2\u20ac\u201d RetentionReport shows expired findings but none deleted"
-        },
-        {
-          "number": 4,
-          "title": "Retention live mode deletes only expired findings",
-          "expectedBehavior": "evaluate_retention with dry_run=False deletes findings older than max_age_days; findings newer than threshold untouched; finding with empty created_at treated as keep (not deleted)",
-          "exactCommand": "uv run pytest tests/test_retention.py -v",
-          "expectedInitialFailure": "ModuleNotFoundError or test file does not exist",
-          "expectedPassingEvidence": "All retention tests pass including age threshold, dry-run, live deletion, and empty created_at safety tests"
-        },
-        {
-          "number": 5,
-          "title": "scanmenow retain CLI end-to-end",
-          "expectedBehavior": "scanmenow retain --max-age-days 90 --dry-run exits 0, prints a retention report showing 0 expired findings (empty DB), no deletions occur",
-          "exactCommand": "uv run scanmenow retain --max-age-days 90 --dry-run",
-          "expectedInitialFailure": "Error: No such command 'retain' (Typer exits with code 2)",
-          "expectedPassingEvidence": "Exit 0, retention report printed with 0 expired findings, no deletion output"
-        }
-      ],
-      "branch": "task/8-group-e-cloud-retention-services",
-      "pr_url": null
-    },
-    {
-      "number": 9,
-      "title": "Task G - Add PII to Scope and Capability",
-      "description": "Add PII scanning to the project scope and detection capability alongside PHI scanning. Task G defines the expanded PII entity set that Task C must benchmark and Task H must represent in independent testing data.",
-      "category": "feature",
-      "priority": 50,
-      "impact": "standard",
-      "status": "build-started",
-      "created_at": "2026-05-27",
-      "completed_at": null,
-      "dependencies": [],
-      "notes": "TASK G BUILD NOTES (orchestrator, 2026-05-27): LOCKED PII LABEL SET \u00e2\u20ac\u201d 8 US-focused Presidio built-in types: CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP. International PII (AU, UK, SG, EU) deferred to Task #16. No custom recognizers needed \u00e2\u20ac\u201d all 8 are Presidio built-ins. --- PHASE 1 GATE (critical): before writing any code, audit the installed Presidio package to verify exact recognizer class names and entity type strings. Wrong class names cause silent misses \u00e2\u20ac\u201d the integration test (engine.get_recognizers()) is the verification gate. --- REQUIRED DELIVERABLES: (1) src/scanmenow/detection/recognizers/pii/__init__.py + us_pii.py \u00e2\u20ac\u201d exports ALL_PII_RECOGNIZERS; (2) src/scanmenow/detection/recognizers/__init__.py updated \u00e2\u20ac\u201d merges ALL_PII_RECOGNIZERS into ALL_RECOGNIZERS; (3) docs/pii_coverage.json \u00e2\u20ac\u201d 8-entry registry mirroring hipaa_coverage.json format: entity_type, Presidio recognizer class, confidence notes, jurisdiction, collision_risk; (4) docs/registries/entity-types.md \u00e2\u20ac\u201d 8 new entries following existing format (Task H coverage matrix depends on this being up to date before corpus production starts); (5) tests/test_pii_recognizers.py \u00e2\u20ac\u201d positive + negative per type (16 tests min) + integration test confirming all 8 registered. --- COLLISION DOCUMENTATION (required in pii_coverage.json): US_DRIVER_LICENSE may overlap with CERTIFICATE_LICENSE_NUMBER; MEDICAL_LICENSE may overlap with MEDICAL_RECORD_NUMBER. Both are expected and Presidio handles them \u00e2\u20ac\u201d document collision_risk field per entity. --- NRP NOTE: Presidio NRP recognizer detects nationality/religion/political group mentions in text (e.g. 'identifies as Catholic', 'US citizen', 'Republican Party member'). It is keyword/phrase detection, not a structured ID format. Document as best-effort in pii_coverage.json. Task C assigns NRP no hard accuracy threshold (same as BIOMETRIC_IDENTIFIER). --- DOWNSTREAM DEPENDENCIES: Task H corpus production is waiting on entity-types.md to be updated before it can finalize its coverage matrix. Task C benchmark thresholds for all 8 PII types are already written in docs/benchmark_thresholds.json \u00e2\u20ac\u201d read it for context. --- ARCHITECTURAL DEPENDENCY CONTRACT (2026-05-27): Task G (#9) OWNS Contract 1. All 8 PII recognizers must be registered into build_analyzer() in src/scanmenow/detection/analyzer.py \u00e2\u20ac\u201d NOT into a separate factory or alternate entry point. build_analyzer() is the single factory for the AnalyzerEngine. Task C imports build_analyzer() as-is and calls it once per benchmark run; it does not know about PII recognizers specifically. Any recognizer Task G merges into ALL_RECOGNIZERS is automatically benchmarked by Task C on the next run with no code change in Task C. This means Task G must merge into src/scanmenow/detection/recognizers/__init__.py (ALL_RECOGNIZERS list) before Task C's first full benchmark run. Do not expose a separate build_pii_analyzer() or similar \u00e2\u20ac\u201d Task C will not call it.",
-      "objective": {
-        "statement": "Deliver 8 US-focused PII entity types (CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP) registered in build_analyzer() alongside existing HIPAA recognizers, with a pii_coverage.json registry, entity-types.md extension, and a passing test suite.",
-        "successCriteria": [
-          "docs/pii_coverage.json documents all 8 US PII entity types with entity_type, presidio_class, jurisdiction, confidence_notes, and collision_risk",
-          "ALL_PII_RECOGNIZERS exported from src/scanmenow/detection/recognizers/pii/us_pii.py and merged into ALL_RECOGNIZERS",
-          "build_analyzer() returns an AnalyzerEngine with all 8 PII entity type strings registered alongside the 7 HIPAA custom recognizers",
-          "tests/test_pii_recognizers.py passes: 8 positive, 8 negative, 1 integration test (17 tests minimum)",
-          "docs/registries/entity-types.md extended with 8 new PII entity type entries"
-        ],
-        "nonGoals": [
-          "International PII entity types \u00e2\u20ac\u201d Task #16",
-          "Filesystem walker integration \u00e2\u20ac\u201d Task #5",
-          "Custom regex PII recognizers for types not in Presidio built-ins",
-          "End-to-end file scanning validation \u00e2\u20ac\u201d Task #4"
-        ],
-        "proofMap": [
-          {
-            "criterion": "docs/pii_coverage.json documents all 8 US PII entity types",
-            "proofUnit": 1
-          },
-          {
-            "criterion": "ALL_PII_RECOGNIZERS exported and merged into ALL_RECOGNIZERS",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "build_analyzer() registers all 8 PII entity type strings",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "tests/test_pii_recognizers.py passes: 8 positive, 8 negative, 1 integration",
-            "proofUnit": 4
-          },
-          {
-            "criterion": "docs/registries/entity-types.md extended with 8 new entries",
-            "proofUnit": 4
-          }
-        ],
-        "stopConditions": [
-          "If any of the 8 target Presidio recognizer classes are absent from the installed Presidio version, stop and resolve the version mismatch before proceeding \u00e2\u20ac\u201d do not write us_pii.py with unverified class names"
-        ]
-      },
-      "plan": "## Overview\n\nActivate 8 US-focused PII entity types from Presidio's built-in recognizer library, merging them into the existing build_analyzer() factory that already carries 7 custom HIPAA Safe Harbor recognizers. No custom regex needed \u00e2\u20ac\u201d all 8 are Presidio built-ins.\n\n## Phases\n\nPhase 1 \u00e2\u20ac\u201d PII Coverage Registry: Audit installed Presidio to confirm class names; produce docs/pii_coverage.json.\nPhase 2 \u00e2\u20ac\u201d PII Recognizer Module: Create pii/ sub-package with us_pii.py exporting ALL_PII_RECOGNIZERS; merge into ALL_RECOGNIZERS in recognizers/__init__.py.\nPhase 3 \u00e2\u20ac\u201d Tests & Entity Registry: Write tests/test_pii_recognizers.py (positive + negative + integration); extend docs/registries/entity-types.md.\n\n## First Proof Unit\n\nProof Unit 1: docs/pii_coverage.json exists with 8 entries.\nCommand: uv run python -c \"import json, pathlib; d=json.loads(pathlib.Path('docs/pii_coverage.json').read_text()); assert len(d)==8; print(f'OK \u00e2\u20ac\u201d {len(d)} PII types documented')\"\nExpected initial failure: FileNotFoundError.",
-      "proofUnits": [
-        {
-          "number": 1,
-          "title": "Coverage registry documents all 8 US PII types",
-          "expectedBehavior": "docs/pii_coverage.json exists with exactly 8 entries documenting entity type, Presidio class, jurisdiction, confidence notes, and collision risk.",
-          "proofType": "smoke-command",
-          "exactCommand": "uv run python -c \"import json, pathlib; d=json.loads(pathlib.Path('docs/pii_coverage.json').read_text()); assert len(d)==8, f'Expected 8, got {len(d)}'; print(f'OK \u00e2\u20ac\u201d {len(d)} PII types documented')\"",
-          "expectedInitialFailure": "FileNotFoundError \u00e2\u20ac\u201d docs/pii_coverage.json does not exist yet.",
-          "expectedPassingEvidence": "Prints 'OK \u00e2\u20ac\u201d 8 PII types documented' and exits 0.",
-          "waiverGuidance": "N/A"
-        },
-        {
-          "number": 2,
-          "title": "All 8 PII recognizers registered in build_analyzer()",
-          "expectedBehavior": "build_analyzer() returns an AnalyzerEngine whose recognizer registry includes all 8 US PII entity type strings.",
-          "proofType": "failing-test",
-          "exactCommand": "uv run pytest tests/test_pii_recognizers.py::test_all_pii_recognizers_registered -v",
-          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.detection.recognizers.pii' or test file does not exist.",
-          "expectedPassingEvidence": "1 passed \u00e2\u20ac\u201d all 8 strings (CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP) appear in the recognizer registry.",
-          "waiverGuidance": "N/A"
-        },
-        {
-          "number": 3,
-          "title": "Positive detection tests pass for all 8 PII types",
-          "expectedBehavior": "Each of the 8 PII entity types detects its target sample text with at least one RecognizerResult returned.",
-          "proofType": "failing-test",
-          "exactCommand": "uv run pytest tests/test_pii_recognizers.py -k \"positive\" -v",
-          "expectedInitialFailure": "ModuleNotFoundError or test file does not exist \u00e2\u20ac\u201d 0 tests collected.",
-          "expectedPassingEvidence": "8 passed \u00e2\u20ac\u201d one positive assertion per entity type.",
-          "waiverGuidance": "N/A"
-        },
-        {
-          "number": 4,
-          "title": "Full PII test suite passes",
-          "expectedBehavior": "All PII recognizer tests pass \u00e2\u20ac\u201d positive detections succeed, negative fixtures produce no false positives, integration test confirms all 8 types are active.",
-          "proofType": "failing-test",
-          "exactCommand": "uv run pytest tests/test_pii_recognizers.py -v",
-          "expectedInitialFailure": "Multiple failures \u00e2\u20ac\u201d recognizer modules and tests do not exist.",
-          "expectedPassingEvidence": "17+ tests passed \u00e2\u20ac\u201d 8 positive, 8 negative, 1 integration. No failures or errors.",
-          "waiverGuidance": "N/A"
-        }
-      ],
-      "branch": "task/9-task-g-add-pii-to-scope-and-capabil",
-      "pr_url": null
-    },
-    {
-      "number": 10,
-      "title": "Task H - Independent Testing Data for Task C",
-      "description": "Produce the independent synthetic PHI/PII testing corpus, companion extracted text files, golden findings JSON, near-miss decoys, and delivery notes that Task C will consume for validation, accuracy benchmarking, and regression guarding. This task must preserve independence by avoiding ScanMeNow source code, tests, and existing fixtures while authoring the corpus.",
-      "category": "feature",
-      "priority": 98,
-      "impact": "standard",
-      "status": "backlog",
-      "created_at": "2026-05-27",
-      "completed_at": null,
-      "dependencies": [
-        9
-      ],
-      "notes": "PII ENTITY LABEL SET (from Task G, 2026-05-27): Task H corpus must include representative examples for all 8 US PII entity types activated by Task G: CREDIT_CARD (Luhn-validated card numbers), US_BANK_NUMBER (US routing/account numbers), US_PASSPORT (US passport numbers), US_DRIVER_LICENSE (US state driver's license numbers), IBAN_CODE (SWIFT/IBAN format bank account numbers), CRYPTO (cryptocurrency wallet addresses \u00e2\u20ac\u201d Bitcoin, Ethereum, etc.), MEDICAL_LICENSE (medical license and NPI numbers), NRP (nationality/religion/political group mentions). These supplement the 15 PHI HIPAA Safe Harbor entity types already in scope. TOTAL LABEL SET: 23 distinct entity labels. --- SPEC CORRECTIONS AND CLARIFICATIONS (2026-05-27, from Task C planning session \u00e2\u20ac\u201d read docs/GROUP-C-CORPUS-SPEC.md for full detail): (1) COVERAGE REQUIREMENT CORRECTION: the '2 positive examples per PII type' figure in the original note is superseded \u00e2\u20ac\u201d correct requirement is >=3 findings across >=2 documents for all 21 hard-threshold labels. BIOMETRIC_IDENTIFIER and NRP require only >=2 mentions with no hard accuracy threshold (best-effort, reported only). (2) THRESHOLD FILE: per-label recall thresholds are now in docs/benchmark_thresholds.json \u00e2\u20ac\u201d this is the authoritative source the benchmark runner enforces. Read it before writing the corpus. (3) MEDICAL_LICENSE vs CERTIFICATE_LICENSE_NUMBER OVERLAP: NPI numbers and state medical license numbers should appear as MEDICAL_LICENSE in golden_findings.json only \u00e2\u20ac\u201d do not add CERTIFICATE_LICENSE_NUMBER for the same span even if that recognizer would also fire. (4) MINIMUM DOCUMENTS: 15 documents minimum across all 13 required formats: txt, csv, docx, doc, xlsx, xls, pptx, pdf (text-layer), pdf (image-only/scanned), png, jpg, tiff, bmp. (5) OCR EXTRACTION: all image files and image-only PDFs must be extracted with pytesseract, lang='eng', default PSM, exactly as shown in docs/GROUP-C-CORPUS-SPEC.md \u00e2\u20ac\u201d offsets in golden_findings.json reference the OCR-extracted text, not the raw image bytes. (6) COMPANION FILES: every non-plaintext, non-CSV document needs a .extracted.txt companion file produced by the library specified in the spec for that format (python-docx for .docx, LibreOffice headless for .doc, openpyxl for .xlsx, xlrd for .xls, python-pptx for .pptx, pdfplumber for text-layer PDF, pytesseract for images and scanned PDF). (7) NEAR-MISS DECOYS: at least 2 near-miss decoy entries per document recorded in the decoys[] array of golden_findings.json \u00e2\u20ac\u201d not just avoided in the document text.",
-      "plan": null,
-      "proofUnits": [],
-      "branch": null,
-      "pr_url": null
-    },
-    {
-      "number": 11,
-      "title": "Build Bi-Temporal Progress Tracking",
-      "description": "Add append-only task history so backlog changes can be queried by both project-effective time and system-recorded time while preserving docs/backlog.json as the current-state projection.",
-      "category": "feature",
-      "priority": 85,
-      "impact": "standard",
-      "status": "backlog",
-      "created_at": "2026-05-27",
-      "completed_at": null,
-      "dependencies": [],
-      "notes": "Process spec: docs/BI-TEMPORAL-PROGRESS-TRACKING.md",
-      "plan": null,
-      "proofUnits": [],
-      "branch": null,
-      "pr_url": null
-    },
-    {
-      "number": 12,
-      "title": "Dependency Bootstrapper - First-Run System Dependency Installer",
-      "description": "On first Electron app launch, detect whether required system dependencies are installed (Tesseract OCR, LibreOffice headless) and silently install any that are missing. Separate install flows for Windows and Linux. Covers: version detection, silent download/install, progress feedback to the user, graceful failure with actionable error message if install is blocked (e.g. no internet, insufficient permissions). Must handle partial installs and re-check on subsequent launches. Option to bundle installers within the Electron package vs. stream from CDN on first run \u00e2\u20ac\u201d decision affects package size vs. install reliability.",
-      "category": "feature",
-      "priority": 75,
-      "impact": "standard",
-      "status": "backlog",
-      "created_at": "2026-05-27",
-      "completed_at": null,
-      "dependencies": [
-        5
-      ],
-      "notes": "System dependencies introduced by Task #5: Tesseract OCR (image scanning), LibreOffice headless (legacy .doc extraction). Both are system-level binaries, not pip packages. Windows install paths: Tesseract at C:\\Program Files\\Tesseract-OCR\\tesseract.exe (winget: UB-Mannheim.TesseractOCR), LibreOffice at C:\\Program Files\\LibreOffice\\program\\soffice.exe. Linux install: apt-get install tesseract-ocr libreoffice (or equivalent). WSL-aware: distinguish WSL from native Linux for path resolution.",
-      "plan": null,
-      "proofUnits": [],
-      "branch": null,
-      "pr_url": null
-    },
-    {
-      "number": 13,
-      "title": "Windows Installer Package",
-      "description": "Build a standalone Windows installer (.exe or .msi) for the ScanMeNow Electron app using Electron Builder. Package includes: embedded Python runtime (PyInstaller or uv-bundled), all pip dependencies, and the dependency bootstrapper (Task #12) that detects and installs Tesseract and LibreOffice on first run. Target: Windows 10/11 64-bit. Deliverable: signed installer that passes Windows SmartScreen, installs to Program Files, adds Start Menu entry and optional desktop shortcut.",
-      "category": "feature",
-      "priority": 70,
-      "impact": "standard",
-      "status": "backlog",
-      "created_at": "2026-05-27",
-      "completed_at": null,
-      "dependencies": [
-        12
-      ],
-      "notes": "Electron Builder target: nsis (NSIS installer) or msi. Python embedding strategy TBD: PyInstaller bundled alongside Electron, or subprocess bridge to system Python. Code signing required for SmartScreen clearance. Consider auto-update via electron-updater.",
-      "plan": null,
-      "proofUnits": [],
-      "branch": null,
-      "pr_url": null
-    },
-    {
-      "number": 14,
-      "title": "Linux Installer Package",
-      "description": "Build standalone Linux installer packages for the ScanMeNow Electron app. Targets: DEB (Ubuntu/Debian), RPM (RHEL/CentOS/Fedora), and AppImage (distribution-agnostic). Package includes: embedded Python runtime, all pip dependencies, and the dependency bootstrapper (Task #12) that detects and installs Tesseract and LibreOffice via the system package manager (apt, dnf, yum). Primary test environment: WSL (Ubuntu). Deliverable: three package artifacts and an install script.",
-      "category": "feature",
-      "priority": 69,
-      "impact": "standard",
-      "status": "backlog",
-      "created_at": "2026-05-27",
-      "completed_at": null,
-      "dependencies": [
-        12
-      ],
-      "notes": "Electron Builder targets: deb, rpm, AppImage. WSL testing confirmed by Scott (2026-05-27). System package manager detection: prefer apt, fallback to dnf/yum/zypper. Bootstrapper must handle headless Linux installs (no GUI sudo prompt). Desktop entry (.desktop file) for GUI environments.",
-      "plan": null,
-      "proofUnits": [],
-      "branch": null,
-      "pr_url": null
-    },
-    {
-      "number": 15,
-      "title": "VMware VM Deployment Package",
-      "description": "Build a pre-configured Linux VM image in OVF/OVA format with ScanMeNow fully installed and all system dependencies (Tesseract, LibreOffice) pre-configured. Targeted at enterprise deployments where application isolation, air-gapped environments, or IT-managed VM provisioning is required. Base OS: Ubuntu LTS (latest stable). Deliverable: OVA file importable into VMware vSphere, VMware Workstation, and VMware Fusion. Includes first-boot configuration script for network, hostname, and initial admin credentials.",
-      "category": "feature",
-      "priority": 60,
-      "impact": "standard",
-      "status": "backlog",
-      "created_at": "2026-05-27",
-      "completedAt": null,
-      "dependencies": [
-        14
-      ],
-      "notes": "Base image: Ubuntu 24.04 LTS (minimal server). VM spec: 4 vCPU, 8GB RAM, 60GB disk (minimum). VMware Tools pre-installed. ScanMeNow installed via Linux DEB package (Task #14 artifact). Consider also producing a VirtualBox OVA variant. Air-gap support: all dependency installers pre-bundled, no internet required post-deploy.",
-      "plan": null,
-      "proofUnits": [],
-      "branch": null,
-      "pr_url": null
-    },
-    {
-      "number": 16,
-      "title": "International PII Scope Expansion",
-      "description": "Extend PII detection coverage beyond US-focused entity types to include international and GDPR-scoped identifiers. Activate Presidio's country-specific built-in recognizers: UK NHS number, AU TFN/Medicare/ABN/ACN, SG NRIC/FIN, EU fiscal codes (IT, ES, FI, PL), and any others supported by Presidio at implementation time. Produce a companion pii_international_coverage.json registry documenting each identifier, jurisdiction, recognizer source, and confidence notes. Depends on Task #9 (US PII foundation) being production.",
-      "category": "feature",
-      "priority": 40,
-      "impact": "standard",
-      "status": "backlog",
-      "created_at": "2026-05-27",
-      "completedAt": null,
-      "dependencies": [
-        9
-      ],
-      "notes": "Deferred from Task #9 scope decision (2026-05-27): Scott confirmed US-only PII scope for Task #9. International expansion added as a separate backlog item for future consideration. No custom recognizers expected \u00e2\u20ac\u201d all international types are Presidio built-ins requiring only registration.",
-      "plan": null,
-      "proofUnits": [],
-      "branch": null,
-      "pr_url": null
-    }
-  ]
+﻿{
+    "tasks":  [
+                  {
+                      "number":  4,
+                      "title":  "Group C - Benchmark Runner \u0026 Accuracy Gate",
+                      "description":  "Build the benchmark runner, reporting surface, and CI accuracy gate that validate ScanMeNow detection against independent PHI/PII testing data. Task C consumes Task D extraction/OCR support, Task G PII capability, and Task H independent testing data.",
+                      "category":  "feature",
+                      "priority":  98,
+                      "status":  "planned",
+                      "impact":  "standard",
+                      "phase":  null,
+                      "phase_task":  null,
+                      "parent":  1,
+                      "created_at":  "2026-05-23",
+                      "completed_at":  null,
+                      "dependencies":  [
+                                           5,
+                                           9,
+                                           10
+                                       ],
+                      "notes":  "PII THRESHOLD POLICY (2026-05-27): Task C must define separate benchmark thresholds for each PII entity label instead of reusing PHI/HIPAA thresholds wholesale. Task G defines the activated PII label set, including CRYPTO and NRP; Task H supplies corpus coverage. Task C owns per-label PII recall/precision thresholds and should document any labels with no hard threshold or best-effort treatment. Thresholds are now written â€” read docs/benchmark_thresholds.json, which is the authoritative source the runner enforces. --- ARCHITECTURE NOTES (orchestrator, 2026-05-27): (1) EXTRACTION STACK: Task C\u0027s runner.py must import Task D\u0027s extraction stack directly (src/scanmenow/walker/reader.py) â€” do not duplicate extraction logic. Same code path = same extracted text = same offsets as corpus. (2) PDF LIBRARY: pdfplumber is authoritative for text-layer PDF extraction across the whole project. Task D uses it, Task H corpus was produced with it, Task C must inherit it via the shared reader. (3) CORPUS PATH: SCANMENOW_CORPUS_PATH env var sets corpus location; --corpus CLI arg overrides; pytest gate skips gracefully if env var unset (do not fail CI on missing corpus). (4) TOLERANCE: exact char offset match for text-native formats; Â±5 char tolerance for OCR-derived formats (PNG/JPG/TIFF/BMP/scanned PDF). --- ARCHITECTURAL DEPENDENCY CONTRACTS (2026-05-27): Task C is a CONSUMER of three cross-task contracts. CONTRACT 1 â€” build_analyzer() [Owner: Task #3 + Task G (#9)]: import build_analyzer() from src/scanmenow/detection/analyzer.py and call it once per benchmark run. Do NOT re-register recognizers inside runner.py. Task G (#9) will have already merged all 8 PII recognizers into this factory before Task C runs; they appear automatically. CONTRACT 2 â€” read_file_text(path) [Owner: Task D (#5)]: import read_file_text(path: Path) -\u003e str from src/scanmenow/walker/reader.py and use it for all corpus text extraction in the benchmark runner. Do NOT duplicate any format-handling logic â€” this is the hard coupling that keeps corpus golden-finding offsets consistent with production scanning offsets. CONTRACT 3 â€” docs/benchmark_thresholds.json [Owner: Task C (#4), this task]: the runner reads this file at startup; no thresholds are hardcoded in runner.py. Adding a new entity type means adding a row to the JSON; the runner picks it up with no code change. min_recall: null + hard_threshold: false = best-effort, reported only, never fails CI.",
+                      "objective":  {
+                                        "statement":  "Deliver a benchmark runner that loads an independent corpus, extracts text through Task D\u0027s shared reader, analyzes text through build_analyzer(), compares analyzer spans against golden findings and decoys, applies per-entity thresholds from docs/benchmark_thresholds.json, and exposes both a CLI command and pytest gate.",
+                                        "successCriteria":  [
+                                                                "Threshold loader reads docs/benchmark_thresholds.json and supports hard-threshold and report-only labels",
+                                                                "Span matcher supports exact text-native matching, +/-5 OCR tolerance, and decoy-aware false-positive accounting",
+                                                                "Runner imports shared read_file_text(path) and build_analyzer() contracts instead of duplicating extraction or recognizer registration",
+                                                                "scanmenow benchmark --corpus \u003cpath\u003e [--output report.json] prints a terminal report and optionally writes JSON",
+                                                                "tests/test_benchmark.py skips gracefully when corpus is absent and enforces configured hard thresholds when corpus is present"
+                                                            ],
+                                        "nonGoals":  [
+                                                         "Producing the independent corpus, golden findings, or extracted text companions - Task H",
+                                                         "Implementing file extraction, OCR, or format readers - Task D",
+                                                         "Registering PHI/PII recognizers - Task G and prior HIPAA recognizer work",
+                                                         "Installing Tesseract or LibreOffice - Task #12",
+                                                         "Redaction, reduction, migration, retention, or UI work"
+                                                     ],
+                                        "proofMap":  [
+                                                         {
+                                                             "criterion":  "Threshold loader reads docs/benchmark_thresholds.json and supports hard-threshold and report-only labels",
+                                                             "proofUnit":  1
+                                                         },
+                                                         {
+                                                             "criterion":  "Span matcher supports exact text-native matching, +/-5 OCR tolerance, and decoy-aware false-positive accounting",
+                                                             "proofUnit":  2
+                                                         },
+                                                         {
+                                                             "criterion":  "Runner imports shared read_file_text(path) and build_analyzer() contracts instead of duplicating extraction or recognizer registration",
+                                                             "proofUnit":  3
+                                                         },
+                                                         {
+                                                             "criterion":  "scanmenow benchmark --corpus \u003cpath\u003e [--output report.json] prints a terminal report and optionally writes JSON",
+                                                             "proofUnit":  4
+                                                         },
+                                                         {
+                                                             "criterion":  "tests/test_benchmark.py skips gracefully when corpus is absent and enforces configured hard thresholds when corpus is present",
+                                                             "proofUnit":  5
+                                                         }
+                                                     ],
+                                        "stopConditions":  [
+                                                               "docs/benchmark_thresholds.json is missing or invalid",
+                                                               "Task D does not expose read_file_text(path)",
+                                                               "Task G has not registered PII recognizers into build_analyzer() before full corpus benchmarking",
+                                                               "Task H corpus format diverges from docs/GROUP-C-CORPUS-SPEC.md"
+                                                           ]
+                                    },
+                      "plan":  "scanmenow_Build/Tasks/Task-4-group-c-benchmark-runner-accuracy-gate.md",
+                      "proofUnits":  [
+                                         {
+                                             "number":  1,
+                                             "title":  "Threshold registry loading",
+                                             "expectedBehavior":  "Threshold registry loads all labels from docs/benchmark_thresholds.json; hard-threshold and report-only labels are represented correctly.",
+                                             "proofType":  "failing-test",
+                                             "exactCommand":  "uv run pytest tests/test_benchmark.py::test_threshold_registry_loads -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError or test file does not exist",
+                                             "expectedPassingEvidence":  "1 passed - threshold registry loads and distinguishes hard-threshold from report-only labels"
+                                         },
+                                         {
+                                             "number":  2,
+                                             "title":  "Span matching and decoy accounting",
+                                             "expectedBehavior":  "Exact spans match, OCR tolerance matches within +/-5 characters, out-of-tolerance spans miss, and decoy hits are tracked separately from uncontrolled false positives.",
+                                             "proofType":  "failing-test",
+                                             "exactCommand":  "uv run pytest tests/test_benchmark.py::test_span_matching_exact_tolerance_and_decoys -v",
+                                             "expectedInitialFailure":  "Matching function does not exist",
+                                             "expectedPassingEvidence":  "1 passed - exact matching, OCR tolerance, misses, and decoy accounting behave as specified"
+                                         },
+                                         {
+                                             "number":  3,
+                                             "title":  "Runner uses shared reader and analyzer contracts",
+                                             "expectedBehavior":  "Runner uses the shared read_file_text(path) extraction path and build_analyzer() analyzer factory while processing a mini corpus into per-entity metrics.",
+                                             "proofType":  "failing-test",
+                                             "exactCommand":  "uv run pytest tests/test_benchmark.py::test_runner_uses_shared_reader_and_analyzer -v",
+                                             "expectedInitialFailure":  "Runner module does not exist",
+                                             "expectedPassingEvidence":  "1 passed - runner processes a mini corpus through the shared contracts"
+                                         },
+                                         {
+                                             "number":  4,
+                                             "title":  "Benchmark CLI outputs table and JSON",
+                                             "expectedBehavior":  "scanmenow benchmark exits 0 against a mini corpus, prints a summary table, and writes JSON when --output is supplied.",
+                                             "proofType":  "failing-test",
+                                             "exactCommand":  "uv run pytest tests/test_benchmark.py::test_benchmark_cli_outputs_table_and_json -v",
+                                             "expectedInitialFailure":  "No benchmark command exists",
+                                             "expectedPassingEvidence":  "1 passed - CLI prints table output and writes JSON report"
+                                         },
+                                         {
+                                             "number":  5,
+                                             "title":  "Pytest benchmark gate behavior",
+                                             "expectedBehavior":  "Benchmark tests pass; corpus-dependent gate skips when corpus path is absent and enforces thresholds when a configured corpus is present.",
+                                             "proofType":  "failing-test",
+                                             "exactCommand":  "uv run pytest tests/test_benchmark.py -v",
+                                             "expectedInitialFailure":  "Benchmark tests or implementation missing",
+                                             "expectedPassingEvidence":  "All benchmark tests pass, including skip and threshold-enforcement behavior"
+                                         }
+                                     ],
+                      "branch":  null,
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  5,
+                      "title":  "Group D - Filesystem Walker \u0026 Integration",
+                      "description":  "Local filesystem walker with path resolution, skip patterns, symlink policy, max-depth limits, and end-to-end CLI integration. File format scope: TXT, CSV, JSON, PDF (pdfplumber), DOCX/XLSX/PPTX (python-docx/openpyxl/python-pptx), legacy DOC (LibreOffice headless subprocess), PNG/JPG/JPEG/TIFF/BMP/GIF (pytesseract + Tesseract OCR). System dependencies: Tesseract OCR, LibreOffice. Platform scope: Windows and Linux.",
+                      "category":  "feature",
+                      "priority":  97,
+                      "status":  "build-started",
+                      "impact":  "standard",
+                      "phase":  null,
+                      "phase_task":  null,
+                      "parent":  1,
+                      "created_at":  "2026-05-23",
+                      "completed_at":  null,
+                      "dependencies":  [
+
+                                       ],
+                      "branch":  null,
+                      "notes":  "Hardening concern carried from Task #3 dual review (Claude Sonnet 4.6 + Codex GPT-5, 2026-05-26): when the filesystem walker pipes findings through the detection layer, expand the recognizer collision tests from \u0027at least one entity fires\u0027 into expected entity/span precedence behaviour. A numeric token can match MEDICAL_RECORD_NUMBER, ACCOUNT_NUMBER, and DEVICE_IDENTIFIER simultaneously; if downstream redaction or reporting logic needs deterministic entity precedence over overlapping PHI spans, that dedup/priority contract must be defined and tested here rather than left implicit. OCR SCOPE ADDITION (2026-05-27): Task D now includes OCR capability for image-format files (PNG, JPG, JPEG, GIF) via Tesseract (pytesseract), and legacy .doc files via LibreOffice headless subprocess (cross-platform, no extra pip package). LibreOffice is a system dependency like Tesseract; absence triggers WARNING + skip rather than crash. Linux testing will be performed on WSL. INSTALLER NOTE: Task #12 (Dependency Bootstrapper) owns auto-detection and installation of Tesseract and LibreOffice for end users. --- ORCHESTRATOR CORRECTIONS (2026-05-27, cross-session sync from Task C/H planning): (1) PDF LIBRARY CORRECTION: use pdfplumber (not pdfminer.six) for text-layer PDF extraction. Task H corpus will generate .extracted.txt companions for text PDFs using pdfplumber per docs/GROUP-C-CORPUS-SPEC.md â€” if Task D uses pdfminer.six instead, extracted text will differ and all text-layer PDF corpus offsets will drift in the benchmark. Update reader.py to use pdfplumber, page-by-page extraction joined with newline. (2) IMAGE FORMAT GAP: add .tiff/.tif and .bmp to SUPPORTED_EXTENSIONS and reader format handlers. The Task H corpus spec (docs/GROUP-C-CORPUS-SPEC.md, correction #4 in Task H backlog notes commit 5e680077) requires doc_013_lab_result_scan.tiff and doc_014_consent_form_scan.bmp â€” these files will be in corpus/ and must be scannable. Both use the same pytesseract extraction path as PNG/JPG. Without them, two corpus documents produce zero findings and Task C benchmark shows 100% false-negative rate for all entity types in those files. --- ARCHITECTURAL DEPENDENCY CONTRACT (2026-05-27): Task D (#5) OWNS Contract 2. Task D must expose read_file_text(path: Path) -\u003e str as a stable public function at src/scanmenow/walker/reader.py. Task C (benchmark runner) imports this function directly â€” it does not duplicate format-handling logic. Interface contract: returns extracted plain text (str); returns empty string + logs WARNING on graceful skip (missing Tesseract, missing LibreOffice); raises on unrecoverable errors. This is the hard coupling that keeps corpus golden-finding offsets consistent with production scanning offsets â€” any drift between Task D\u0027s extraction and Task C\u0027s extraction invalidates benchmark accuracy numbers in both directions. The extraction libraries and commands specified in docs/GROUP-C-CORPUS-SPEC.md are authoritative for this function.",
+                      "objective":  {
+                                        "statement":  "Deliver a working filesystem walker that scans all supported file formats (TXT, CSV, JSON, PDF, DOCX, XLSX, PPTX, DOC, PNG, JPG, JPEG, TIFF, BMP, GIF) for PHI/PII, stores structured findings in SQLite with source_line provenance, and exposes `scanmenow scan \u003cpath\u003e` as a working CLI command on Windows and Linux.",
+                                        "successCriteria":  [
+                                                                "All 10 file format readers extract non-empty text from fixture files and pass unit tests",
+                                                                "FileSystemWalker correctly applies skip patterns, max-depth, and symlink skip policy as verified by unit tests",
+                                                                "Span collision test asserts â‰¥2 distinct entity types on overlapping spans; get_overlapping_findings() returns all",
+                                                                "run_scan() persists findings in SQLite with source_line populated for text-based formats",
+                                                                "scanmenow scan \u003cpath\u003e CLI command exits 0, prints summary, and persists findings for a multi-format fixture directory"
+                                                            ],
+                                        "nonGoals":  [
+                                                         "Dependency bootstrapper or auto-install of Tesseract/LibreOffice for end users (Task #12)",
+                                                         "Windows/Linux/VMware installers (Tasks #13-15)",
+                                                         "Legacy .xls, .xlsb, .ppt binary formats",
+                                                         "Streaming or chunked scanning for files \u003e100MB",
+                                                         "Cloud storage scanning (Task #8)",
+                                                         "Reduction or redaction pipeline",
+                                                         "Electron UI integration"
+                                                     ],
+                                        "proofMap":  [
+                                                         {
+                                                             "criterion":  "All 10 file format readers extract non-empty text from fixture files and pass unit tests",
+                                                             "proofUnit":  2
+                                                         },
+                                                         {
+                                                             "criterion":  "FileSystemWalker correctly applies skip patterns, max-depth, and symlink skip policy as verified by unit tests",
+                                                             "proofUnit":  1
+                                                         },
+                                                         {
+                                                             "criterion":  "Span collision test asserts â‰¥2 distinct entity types on overlapping spans; get_overlapping_findings() returns all",
+                                                             "proofUnit":  3
+                                                         },
+                                                         {
+                                                             "criterion":  "run_scan() persists findings in SQLite with source_line populated for text-based formats",
+                                                             "proofUnit":  4
+                                                         },
+                                                         {
+                                                             "criterion":  "scanmenow scan \u003cpath\u003e CLI command exits 0, prints summary, and persists findings for a multi-format fixture directory",
+                                                             "proofUnit":  5
+                                                         }
+                                                     ],
+                                        "stopConditions":  [
+                                                               "Task #3 (HIPAA recognizers) is not yet merged to main â€” Task #5 branch must be based on task/3 branch or wait for merge before build can start",
+                                                               "LibreOffice not installed on build machine â€” .doc tests must be mocked or skipped; document clearly in test"
+                                                           ]
+                                    },
+                      "proofUnits":  [
+                                         {
+                                             "number":  1,
+                                             "title":  "Walker unit tests pass",
+                                             "expectedBehavior":  "FileSystemWalker correctly applies skip patterns, max-depth, symlink skip, and hidden file policy across all configured test scenarios",
+                                             "exactCommand":  "uv run pytest tests/test_walker.py -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError: No module named \u0027scanmenow.walker\u0027 or test file does not exist",
+                                             "expectedPassingEvidence":  "All walker tests pass â€” at minimum: skip pattern, max depth, symlink skip, hidden file, path resolution, unsupported extension tests green"
+                                         },
+                                         {
+                                             "number":  2,
+                                             "title":  "Reader unit tests pass (all formats)",
+                                             "expectedBehavior":  "read_file_text() returns non-empty text for each supported format fixture; graceful skip (empty string + WARNING) when Tesseract or LibreOffice absent",
+                                             "exactCommand":  "uv run pytest tests/test_reader.py -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError: No module named \u0027scanmenow.walker.reader\u0027 or test file does not exist",
+                                             "expectedPassingEvidence":  "All reader tests pass including graceful-skip mock tests for missing Tesseract/LibreOffice"
+                                         },
+                                         {
+                                             "number":  3,
+                                             "title":  "Span collision contract tests",
+                                             "expectedBehavior":  "A numeric token prefixed with MRN, account, and serial context keywords produces â‰¥2 distinct entity_type findings with overlapping spans; get_overlapping_findings() returns all of them",
+                                             "exactCommand":  "uv run pytest tests/test_span_collision.py -v",
+                                             "expectedInitialFailure":  "test file does not exist",
+                                             "expectedPassingEvidence":  "test_overlapping_entities_all_saved and test_get_overlapping_findings_returns_all pass; hardening contract comment present in test source"
+                                         },
+                                         {
+                                             "number":  4,
+                                             "title":  "Integration scan test â€” fixture directory to SQLite findings",
+                                             "expectedBehavior":  "run_scan() on the tests/fixtures/ directory produces a ScanSummary with files_scanned \u003e= 3, persists findings in SQLite, source_line is populated for text-based format findings, source_file is set",
+                                             "exactCommand":  "uv run pytest tests/test_scanner.py -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError: No module named \u0027scanmenow.scanner\u0027 or test file does not exist",
+                                             "expectedPassingEvidence":  "All scanner integration tests pass; findings retrievable from SQLite after scan"
+                                         },
+                                         {
+                                             "number":  5,
+                                             "title":  "CLI scan command end-to-end",
+                                             "expectedBehavior":  "scanmenow scan ./tests/fixtures/ exits 0, prints a summary table with files scanned and findings count, and a ScanJob record exists in SQLite after the run",
+                                             "exactCommand":  "uv run scanmenow scan ./tests/fixtures/ --depth 2",
+                                             "expectedInitialFailure":  "Error: No such command \u0027scan\u0027 (Typer exits with code 2)",
+                                             "expectedPassingEvidence":  "Exit 0, summary output visible in terminal, job_id printed, findings retrievable from DB"
+                                         }
+                                     ],
+                      "plan":  "scanmenow_Build/Tasks/Task-5-group-d-filesystem-walker-integration.md",
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  7,
+                      "title":  "Group F - Phase 1 Exit Gate \u0026 Verification",
+                      "description":  "Accuracy threshold validation, CLI functional tests on real fixture directory, documentation, and Phase 1 completion (1 subtask)",
+                      "category":  "feature",
+                      "priority":  95,
+                      "status":  "backlog",
+                      "impact":  "standard",
+                      "phase":  null,
+                      "phase_task":  null,
+                      "parent":  1,
+                      "created_at":  "2026-05-23",
+                      "completed_at":  null,
+                      "dependencies":  [
+
+                                       ],
+                      "plan":  null,
+                      "proofUnits":  [
+
+                                     ],
+                      "branch":  null,
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  8,
+                      "title":  "Group E - Cloud \u0026 Retention Services",
+                      "description":  "Firestore connection layer with environment flag for local dev, retention policy evaluation, and cloud integration (4 subtasks)",
+                      "category":  "feature",
+                      "priority":  96,
+                      "status":  "build-complete",
+                      "impact":  "standard",
+                      "phase":  null,
+                      "phase_task":  null,
+                      "parent":  1,
+                      "created_at":  "2026-05-23",
+                      "completed_at":  null,
+                      "dependencies":  [
+                                           5
+                                       ],
+                      "notes":  "STORAGE LAYER DEPENDENCY (orchestrator, 2026-05-27): Task #8 refactors storage into a Repository(Protocol) + SqliteRepository class (storage/base.py). Task #5 extends the same storage module: adds findings.source_line via ALTER TABLE and adds get_overlapping_findings() to repository. If Task #8 builds before Task #5, SqliteRepository will be created without wrapping get_overlapping_findings(), leaving the Repository protocol incomplete. Task #5 must land first (priority 97 \u003e 96 already enforces order), OR Task #8 must include get_overlapping_findings() in the Repository protocol and SqliteRepository on the assumption that Task #5 adds it. Dependency [5] added to enforce correct build order. --- Also note: Task #8 adds findings.created_at column via ALTER TABLE; Task #5 adds findings.source_line via ALTER TABLE. Both are idempotent. The order does not matter for the migrations themselves, only for the Repository class wrapper.",
+                      "objective":  {
+                                        "statement":  "Deliver a Firestore-backed cloud storage layer with a SCANMENOW_BACKEND env flag (sqlite|firestore), an age-based retention policy evaluator, and a `scanmenow retain` CLI subcommand â€” all independently testable without a live GCP connection.",
+                                        "successCriteria":  [
+                                                                "Repository protocol extracted; SqliteRepository and FirestoreRepository (mocked) both satisfy it; get_repository() routes on SCANMENOW_BACKEND",
+                                                                "FirestoreRepository lazily imports google-cloud-firestore so SQLite mode never requires GCP credentials",
+                                                                "evaluate_retention() dry-run returns RetentionReport with expired_count and zero deleted_count without deleting any findings",
+                                                                "evaluate_retention() live mode deletes only findings older than max_age_days; findings with empty created_at are conservatively kept",
+                                                                "scanmenow retain --max-age-days 90 --dry-run exits 0 and prints a retention report"
+                                                            ],
+                                        "nonGoals":  [
+                                                         "Retention tiers by entity type (SSN=30d, generic=90d) â€” follow-up backlog task",
+                                                         "Legal holds and approval gates â€” follow-up backlog task",
+                                                         "Archive to cold storage instead of delete â€” follow-up backlog task",
+                                                         "Firestore emulator integration tests",
+                                                         "Firestore security rules configuration",
+                                                         "Real-time Firestore listeners or streaming",
+                                                         "Multi-region Firestore setup"
+                                                     ],
+                                        "proofMap":  [
+                                                         {
+                                                             "criterion":  "Repository protocol extracted; both repos satisfy it; get_repository() routes on SCANMENOW_BACKEND",
+                                                             "proofUnit":  1
+                                                         },
+                                                         {
+                                                             "criterion":  "FirestoreRepository lazily imports google-cloud-firestore so SQLite mode never requires GCP credentials",
+                                                             "proofUnit":  2
+                                                         },
+                                                         {
+                                                             "criterion":  "evaluate_retention() dry-run returns RetentionReport without deleting any findings",
+                                                             "proofUnit":  3
+                                                         },
+                                                         {
+                                                             "criterion":  "evaluate_retention() live mode deletes only findings older than max_age_days; empty created_at kept",
+                                                             "proofUnit":  4
+                                                         },
+                                                         {
+                                                             "criterion":  "scanmenow retain --max-age-days 90 --dry-run exits 0 and prints a retention report",
+                                                             "proofUnit":  5
+                                                         }
+                                                     ],
+                                        "stopConditions":  [
+                                                               "If google-cloud-firestore package cannot be installed as an optional dep without breaking the base install, stop and resolve the packaging approach before proceeding"
+                                                           ]
+                                    },
+                      "plan":  "scanmenow_Build/Tasks/Task-8-group-e-cloud-retention-services.md",
+                      "proofUnits":  [
+                                         {
+                                             "number":  1,
+                                             "title":  "Repository protocol compliance and env routing",
+                                             "expectedBehavior":  "Both SqliteRepository and FirestoreRepository (injected mock client) satisfy the Repository protocol at runtime; get_repository(\u0027sqlite\u0027) returns SqliteRepository; get_repository(\u0027firestore\u0027) returns FirestoreRepository; default (no env var) returns SqliteRepository",
+                                             "exactCommand":  "uv run pytest tests/test_repository_protocol.py -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError: No module named \u0027scanmenow.storage.base\u0027 or test file does not exist",
+                                             "expectedPassingEvidence":  "All protocol compliance and routing tests pass"
+                                         },
+                                         {
+                                             "number":  2,
+                                             "title":  "Firestore client factory and lazy import safety",
+                                             "expectedBehavior":  "get_firestore_client() raises RuntimeError when credentials absent (mocked); FirestoreRepository save/get/delete call correct Firestore collection methods (mock asserts); importing cloud.client does not trigger google.cloud.firestore import in sys.modules",
+                                             "exactCommand":  "uv run pytest tests/test_cloud.py -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError: No module named \u0027scanmenow.cloud\u0027 or test file does not exist",
+                                             "expectedPassingEvidence":  "All Firestore client and lazy import tests pass"
+                                         },
+                                         {
+                                             "number":  3,
+                                             "title":  "Retention dry-run returns report without deletion",
+                                             "expectedBehavior":  "evaluate_retention(repo, RetentionPolicy(max_age_days=30, dry_run=True)) returns RetentionReport with expired_count \u003e= 1 and deleted_count == 0; no finding removed from repo",
+                                             "exactCommand":  "uv run pytest tests/test_retention.py::test_dry_run_returns_report_without_deletion -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError: No module named \u0027scanmenow.retention\u0027 or test file does not exist",
+                                             "expectedPassingEvidence":  "1 passed â€” RetentionReport shows expired findings but none deleted"
+                                         },
+                                         {
+                                             "number":  4,
+                                             "title":  "Retention live mode deletes only expired findings",
+                                             "expectedBehavior":  "evaluate_retention with dry_run=False deletes findings older than max_age_days; findings newer than threshold untouched; finding with empty created_at treated as keep (not deleted)",
+                                             "exactCommand":  "uv run pytest tests/test_retention.py -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError or test file does not exist",
+                                             "expectedPassingEvidence":  "All retention tests pass including age threshold, dry-run, live deletion, and empty created_at safety tests"
+                                         },
+                                         {
+                                             "number":  5,
+                                             "title":  "scanmenow retain CLI end-to-end",
+                                             "expectedBehavior":  "scanmenow retain --max-age-days 90 --dry-run exits 0, prints a retention report showing 0 expired findings (empty DB), no deletions occur",
+                                             "exactCommand":  "uv run scanmenow retain --max-age-days 90 --dry-run",
+                                             "expectedInitialFailure":  "Error: No such command \u0027retain\u0027 (Typer exits with code 2)",
+                                             "expectedPassingEvidence":  "Exit 0, retention report printed with 0 expired findings, no deletion output"
+                                         }
+                                     ],
+                      "branch":  "task/8-group-e-cloud-retention-services",
+                      "pr_url":  "https://github.com/AesopScott/scanmenow/pull/6"
+                  },
+                  {
+                      "number":  9,
+                      "title":  "Task G - Add PII to Scope and Capability",
+                      "description":  "Add PII scanning to the project scope and detection capability alongside PHI scanning. Task G defines the expanded PII entity set that Task C must benchmark and Task H must represent in independent testing data.",
+                      "category":  "feature",
+                      "priority":  50,
+                      "impact":  "standard",
+                      "status":  "build-started",
+                      "created_at":  "2026-05-27",
+                      "completed_at":  null,
+                      "dependencies":  [
+
+                                       ],
+                      "notes":  "TASK G BUILD NOTES (orchestrator, 2026-05-27): LOCKED PII LABEL SET â€” 8 US-focused Presidio built-in types: CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP. International PII (AU, UK, SG, EU) deferred to Task #16. No custom recognizers needed â€” all 8 are Presidio built-ins. --- PHASE 1 GATE (critical): before writing any code, audit the installed Presidio package to verify exact recognizer class names and entity type strings. Wrong class names cause silent misses â€” the integration test (engine.get_recognizers()) is the verification gate. --- REQUIRED DELIVERABLES: (1) src/scanmenow/detection/recognizers/pii/__init__.py + us_pii.py â€” exports ALL_PII_RECOGNIZERS; (2) src/scanmenow/detection/recognizers/__init__.py updated â€” merges ALL_PII_RECOGNIZERS into ALL_RECOGNIZERS; (3) docs/pii_coverage.json â€” 8-entry registry mirroring hipaa_coverage.json format: entity_type, Presidio recognizer class, confidence notes, jurisdiction, collision_risk; (4) docs/registries/entity-types.md â€” 8 new entries following existing format (Task H coverage matrix depends on this being up to date before corpus production starts); (5) tests/test_pii_recognizers.py â€” positive + negative per type (16 tests min) + integration test confirming all 8 registered. --- COLLISION DOCUMENTATION (required in pii_coverage.json): US_DRIVER_LICENSE may overlap with CERTIFICATE_LICENSE_NUMBER; MEDICAL_LICENSE may overlap with MEDICAL_RECORD_NUMBER. Both are expected and Presidio handles them â€” document collision_risk field per entity. --- NRP NOTE: Presidio NRP recognizer detects nationality/religion/political group mentions in text (e.g. \u0027identifies as Catholic\u0027, \u0027US citizen\u0027, \u0027Republican Party member\u0027). It is keyword/phrase detection, not a structured ID format. Document as best-effort in pii_coverage.json. Task C assigns NRP no hard accuracy threshold (same as BIOMETRIC_IDENTIFIER). --- DOWNSTREAM DEPENDENCIES: Task H corpus production is waiting on entity-types.md to be updated before it can finalize its coverage matrix. Task C benchmark thresholds for all 8 PII types are already written in docs/benchmark_thresholds.json â€” read it for context. --- ARCHITECTURAL DEPENDENCY CONTRACT (2026-05-27): Task G (#9) OWNS Contract 1. All 8 PII recognizers must be registered into build_analyzer() in src/scanmenow/detection/analyzer.py â€” NOT into a separate factory or alternate entry point. build_analyzer() is the single factory for the AnalyzerEngine. Task C imports build_analyzer() as-is and calls it once per benchmark run; it does not know about PII recognizers specifically. Any recognizer Task G merges into ALL_RECOGNIZERS is automatically benchmarked by Task C on the next run with no code change in Task C. This means Task G must merge into src/scanmenow/detection/recognizers/__init__.py (ALL_RECOGNIZERS list) before Task C\u0027s first full benchmark run. Do not expose a separate build_pii_analyzer() or similar â€” Task C will not call it.",
+                      "objective":  {
+                                        "statement":  "Deliver 8 US-focused PII entity types (CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP) registered in build_analyzer() alongside existing HIPAA recognizers, with a pii_coverage.json registry, entity-types.md extension, and a passing test suite.",
+                                        "successCriteria":  [
+                                                                "docs/pii_coverage.json documents all 8 US PII entity types with entity_type, presidio_class, jurisdiction, confidence_notes, and collision_risk",
+                                                                "ALL_PII_RECOGNIZERS exported from src/scanmenow/detection/recognizers/pii/us_pii.py and merged into ALL_RECOGNIZERS",
+                                                                "build_analyzer() returns an AnalyzerEngine with all 8 PII entity type strings registered alongside the 7 HIPAA custom recognizers",
+                                                                "tests/test_pii_recognizers.py passes: 8 positive, 8 negative, 1 integration test (17 tests minimum)",
+                                                                "docs/registries/entity-types.md extended with 8 new PII entity type entries"
+                                                            ],
+                                        "nonGoals":  [
+                                                         "International PII entity types â€” Task #16",
+                                                         "Filesystem walker integration â€” Task #5",
+                                                         "Custom regex PII recognizers for types not in Presidio built-ins",
+                                                         "End-to-end file scanning validation â€” Task #4"
+                                                     ],
+                                        "proofMap":  [
+                                                         {
+                                                             "criterion":  "docs/pii_coverage.json documents all 8 US PII entity types",
+                                                             "proofUnit":  1
+                                                         },
+                                                         {
+                                                             "criterion":  "ALL_PII_RECOGNIZERS exported and merged into ALL_RECOGNIZERS",
+                                                             "proofUnit":  2
+                                                         },
+                                                         {
+                                                             "criterion":  "build_analyzer() registers all 8 PII entity type strings",
+                                                             "proofUnit":  2
+                                                         },
+                                                         {
+                                                             "criterion":  "tests/test_pii_recognizers.py passes: 8 positive, 8 negative, 1 integration",
+                                                             "proofUnit":  4
+                                                         },
+                                                         {
+                                                             "criterion":  "docs/registries/entity-types.md extended with 8 new entries",
+                                                             "proofUnit":  4
+                                                         }
+                                                     ],
+                                        "stopConditions":  [
+                                                               "If any of the 8 target Presidio recognizer classes are absent from the installed Presidio version, stop and resolve the version mismatch before proceeding â€” do not write us_pii.py with unverified class names"
+                                                           ]
+                                    },
+                      "plan":  "## Overview\n\nActivate 8 US-focused PII entity types from Presidio\u0027s built-in recognizer library, merging them into the existing build_analyzer() factory that already carries 7 custom HIPAA Safe Harbor recognizers. No custom regex needed â€” all 8 are Presidio built-ins.\n\n## Phases\n\nPhase 1 â€” PII Coverage Registry: Audit installed Presidio to confirm class names; produce docs/pii_coverage.json.\nPhase 2 â€” PII Recognizer Module: Create pii/ sub-package with us_pii.py exporting ALL_PII_RECOGNIZERS; merge into ALL_RECOGNIZERS in recognizers/__init__.py.\nPhase 3 â€” Tests \u0026 Entity Registry: Write tests/test_pii_recognizers.py (positive + negative + integration); extend docs/registries/entity-types.md.\n\n## First Proof Unit\n\nProof Unit 1: docs/pii_coverage.json exists with 8 entries.\nCommand: uv run python -c \"import json, pathlib; d=json.loads(pathlib.Path(\u0027docs/pii_coverage.json\u0027).read_text()); assert len(d)==8; print(f\u0027OK â€” {len(d)} PII types documented\u0027)\"\nExpected initial failure: FileNotFoundError.",
+                      "proofUnits":  [
+                                         {
+                                             "number":  1,
+                                             "title":  "Coverage registry documents all 8 US PII types",
+                                             "expectedBehavior":  "docs/pii_coverage.json exists with exactly 8 entries documenting entity type, Presidio class, jurisdiction, confidence notes, and collision risk.",
+                                             "proofType":  "smoke-command",
+                                             "exactCommand":  "uv run python -c \"import json, pathlib; d=json.loads(pathlib.Path(\u0027docs/pii_coverage.json\u0027).read_text()); assert len(d)==8, f\u0027Expected 8, got {len(d)}\u0027; print(f\u0027OK â€” {len(d)} PII types documented\u0027)\"",
+                                             "expectedInitialFailure":  "FileNotFoundError â€” docs/pii_coverage.json does not exist yet.",
+                                             "expectedPassingEvidence":  "Prints \u0027OK â€” 8 PII types documented\u0027 and exits 0.",
+                                             "waiverGuidance":  "N/A"
+                                         },
+                                         {
+                                             "number":  2,
+                                             "title":  "All 8 PII recognizers registered in build_analyzer()",
+                                             "expectedBehavior":  "build_analyzer() returns an AnalyzerEngine whose recognizer registry includes all 8 US PII entity type strings.",
+                                             "proofType":  "failing-test",
+                                             "exactCommand":  "uv run pytest tests/test_pii_recognizers.py::test_all_pii_recognizers_registered -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError: No module named \u0027scanmenow.detection.recognizers.pii\u0027 or test file does not exist.",
+                                             "expectedPassingEvidence":  "1 passed â€” all 8 strings (CREDIT_CARD, US_BANK_NUMBER, US_PASSPORT, US_DRIVER_LICENSE, IBAN_CODE, CRYPTO, MEDICAL_LICENSE, NRP) appear in the recognizer registry.",
+                                             "waiverGuidance":  "N/A"
+                                         },
+                                         {
+                                             "number":  3,
+                                             "title":  "Positive detection tests pass for all 8 PII types",
+                                             "expectedBehavior":  "Each of the 8 PII entity types detects its target sample text with at least one RecognizerResult returned.",
+                                             "proofType":  "failing-test",
+                                             "exactCommand":  "uv run pytest tests/test_pii_recognizers.py -k \"positive\" -v",
+                                             "expectedInitialFailure":  "ModuleNotFoundError or test file does not exist â€” 0 tests collected.",
+                                             "expectedPassingEvidence":  "8 passed â€” one positive assertion per entity type.",
+                                             "waiverGuidance":  "N/A"
+                                         },
+                                         {
+                                             "number":  4,
+                                             "title":  "Full PII test suite passes",
+                                             "expectedBehavior":  "All PII recognizer tests pass â€” positive detections succeed, negative fixtures produce no false positives, integration test confirms all 8 types are active.",
+                                             "proofType":  "failing-test",
+                                             "exactCommand":  "uv run pytest tests/test_pii_recognizers.py -v",
+                                             "expectedInitialFailure":  "Multiple failures â€” recognizer modules and tests do not exist.",
+                                             "expectedPassingEvidence":  "17+ tests passed â€” 8 positive, 8 negative, 1 integration. No failures or errors.",
+                                             "waiverGuidance":  "N/A"
+                                         }
+                                     ],
+                      "branch":  "task/9-task-g-add-pii-to-scope-and-capabil",
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  10,
+                      "title":  "Task H - Independent Testing Data for Task C",
+                      "description":  "Produce the independent synthetic PHI/PII testing corpus, companion extracted text files, golden findings JSON, near-miss decoys, and delivery notes that Task C will consume for validation, accuracy benchmarking, and regression guarding. This task must preserve independence by avoiding ScanMeNow source code, tests, and existing fixtures while authoring the corpus.",
+                      "category":  "feature",
+                      "priority":  98,
+                      "impact":  "standard",
+                      "status":  "backlog",
+                      "created_at":  "2026-05-27",
+                      "completed_at":  null,
+                      "dependencies":  [
+                                           9
+                                       ],
+                      "notes":  "PII ENTITY LABEL SET (from Task G, 2026-05-27): Task H corpus must include representative examples for all 8 US PII entity types activated by Task G: CREDIT_CARD (Luhn-validated card numbers), US_BANK_NUMBER (US routing/account numbers), US_PASSPORT (US passport numbers), US_DRIVER_LICENSE (US state driver\u0027s license numbers), IBAN_CODE (SWIFT/IBAN format bank account numbers), CRYPTO (cryptocurrency wallet addresses â€” Bitcoin, Ethereum, etc.), MEDICAL_LICENSE (medical license and NPI numbers), NRP (nationality/religion/political group mentions). These supplement the 15 PHI HIPAA Safe Harbor entity types already in scope. TOTAL LABEL SET: 23 distinct entity labels. --- SPEC CORRECTIONS AND CLARIFICATIONS (2026-05-27, from Task C planning session â€” read docs/GROUP-C-CORPUS-SPEC.md for full detail): (1) COVERAGE REQUIREMENT CORRECTION: the \u00272 positive examples per PII type\u0027 figure in the original note is superseded â€” correct requirement is \u003e=3 findings across \u003e=2 documents for all 21 hard-threshold labels. BIOMETRIC_IDENTIFIER and NRP require only \u003e=2 mentions with no hard accuracy threshold (best-effort, reported only). (2) THRESHOLD FILE: per-label recall thresholds are now in docs/benchmark_thresholds.json â€” this is the authoritative source the benchmark runner enforces. Read it before writing the corpus. (3) MEDICAL_LICENSE vs CERTIFICATE_LICENSE_NUMBER OVERLAP: NPI numbers and state medical license numbers should appear as MEDICAL_LICENSE in golden_findings.json only â€” do not add CERTIFICATE_LICENSE_NUMBER for the same span even if that recognizer would also fire. (4) MINIMUM DOCUMENTS: 15 documents minimum across all 13 required formats: txt, csv, docx, doc, xlsx, xls, pptx, pdf (text-layer), pdf (image-only/scanned), png, jpg, tiff, bmp. (5) OCR EXTRACTION: all image files and image-only PDFs must be extracted with pytesseract, lang=\u0027eng\u0027, default PSM, exactly as shown in docs/GROUP-C-CORPUS-SPEC.md â€” offsets in golden_findings.json reference the OCR-extracted text, not the raw image bytes. (6) COMPANION FILES: every non-plaintext, non-CSV document needs a .extracted.txt companion file produced by the library specified in the spec for that format (python-docx for .docx, LibreOffice headless for .doc, openpyxl for .xlsx, xlrd for .xls, python-pptx for .pptx, pdfplumber for text-layer PDF, pytesseract for images and scanned PDF). (7) NEAR-MISS DECOYS: at least 2 near-miss decoy entries per document recorded in the decoys[] array of golden_findings.json â€” not just avoided in the document text.",
+                      "plan":  null,
+                      "proofUnits":  [
+
+                                     ],
+                      "branch":  null,
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  11,
+                      "title":  "Build Bi-Temporal Progress Tracking",
+                      "description":  "Add append-only task history so backlog changes can be queried by both project-effective time and system-recorded time while preserving docs/backlog.json as the current-state projection.",
+                      "category":  "feature",
+                      "priority":  85,
+                      "impact":  "standard",
+                      "status":  "backlog",
+                      "created_at":  "2026-05-27",
+                      "completed_at":  null,
+                      "dependencies":  [
+
+                                       ],
+                      "notes":  "Process spec: docs/BI-TEMPORAL-PROGRESS-TRACKING.md",
+                      "plan":  null,
+                      "proofUnits":  [
+
+                                     ],
+                      "branch":  null,
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  12,
+                      "title":  "Dependency Bootstrapper - First-Run System Dependency Installer",
+                      "description":  "On first Electron app launch, detect whether required system dependencies are installed (Tesseract OCR, LibreOffice headless) and silently install any that are missing. Separate install flows for Windows and Linux. Covers: version detection, silent download/install, progress feedback to the user, graceful failure with actionable error message if install is blocked (e.g. no internet, insufficient permissions). Must handle partial installs and re-check on subsequent launches. Option to bundle installers within the Electron package vs. stream from CDN on first run â€” decision affects package size vs. install reliability.",
+                      "category":  "feature",
+                      "priority":  75,
+                      "impact":  "standard",
+                      "status":  "backlog",
+                      "created_at":  "2026-05-27",
+                      "completed_at":  null,
+                      "dependencies":  [
+                                           5
+                                       ],
+                      "notes":  "System dependencies introduced by Task #5: Tesseract OCR (image scanning), LibreOffice headless (legacy .doc extraction). Both are system-level binaries, not pip packages. Windows install paths: Tesseract at C:\\Program Files\\Tesseract-OCR\\tesseract.exe (winget: UB-Mannheim.TesseractOCR), LibreOffice at C:\\Program Files\\LibreOffice\\program\\soffice.exe. Linux install: apt-get install tesseract-ocr libreoffice (or equivalent). WSL-aware: distinguish WSL from native Linux for path resolution.",
+                      "plan":  null,
+                      "proofUnits":  [
+
+                                     ],
+                      "branch":  null,
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  13,
+                      "title":  "Windows Installer Package",
+                      "description":  "Build a standalone Windows installer (.exe or .msi) for the ScanMeNow Electron app using Electron Builder. Package includes: embedded Python runtime (PyInstaller or uv-bundled), all pip dependencies, and the dependency bootstrapper (Task #12) that detects and installs Tesseract and LibreOffice on first run. Target: Windows 10/11 64-bit. Deliverable: signed installer that passes Windows SmartScreen, installs to Program Files, adds Start Menu entry and optional desktop shortcut.",
+                      "category":  "feature",
+                      "priority":  70,
+                      "impact":  "standard",
+                      "status":  "backlog",
+                      "created_at":  "2026-05-27",
+                      "completed_at":  null,
+                      "dependencies":  [
+                                           12
+                                       ],
+                      "notes":  "Electron Builder target: nsis (NSIS installer) or msi. Python embedding strategy TBD: PyInstaller bundled alongside Electron, or subprocess bridge to system Python. Code signing required for SmartScreen clearance. Consider auto-update via electron-updater.",
+                      "plan":  null,
+                      "proofUnits":  [
+
+                                     ],
+                      "branch":  null,
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  14,
+                      "title":  "Linux Installer Package",
+                      "description":  "Build standalone Linux installer packages for the ScanMeNow Electron app. Targets: DEB (Ubuntu/Debian), RPM (RHEL/CentOS/Fedora), and AppImage (distribution-agnostic). Package includes: embedded Python runtime, all pip dependencies, and the dependency bootstrapper (Task #12) that detects and installs Tesseract and LibreOffice via the system package manager (apt, dnf, yum). Primary test environment: WSL (Ubuntu). Deliverable: three package artifacts and an install script.",
+                      "category":  "feature",
+                      "priority":  69,
+                      "impact":  "standard",
+                      "status":  "backlog",
+                      "created_at":  "2026-05-27",
+                      "completed_at":  null,
+                      "dependencies":  [
+                                           12
+                                       ],
+                      "notes":  "Electron Builder targets: deb, rpm, AppImage. WSL testing confirmed by Scott (2026-05-27). System package manager detection: prefer apt, fallback to dnf/yum/zypper. Bootstrapper must handle headless Linux installs (no GUI sudo prompt). Desktop entry (.desktop file) for GUI environments.",
+                      "plan":  null,
+                      "proofUnits":  [
+
+                                     ],
+                      "branch":  null,
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  15,
+                      "title":  "VMware VM Deployment Package",
+                      "description":  "Build a pre-configured Linux VM image in OVF/OVA format with ScanMeNow fully installed and all system dependencies (Tesseract, LibreOffice) pre-configured. Targeted at enterprise deployments where application isolation, air-gapped environments, or IT-managed VM provisioning is required. Base OS: Ubuntu LTS (latest stable). Deliverable: OVA file importable into VMware vSphere, VMware Workstation, and VMware Fusion. Includes first-boot configuration script for network, hostname, and initial admin credentials.",
+                      "category":  "feature",
+                      "priority":  60,
+                      "impact":  "standard",
+                      "status":  "backlog",
+                      "created_at":  "2026-05-27",
+                      "completedAt":  null,
+                      "dependencies":  [
+                                           14
+                                       ],
+                      "notes":  "Base image: Ubuntu 24.04 LTS (minimal server). VM spec: 4 vCPU, 8GB RAM, 60GB disk (minimum). VMware Tools pre-installed. ScanMeNow installed via Linux DEB package (Task #14 artifact). Consider also producing a VirtualBox OVA variant. Air-gap support: all dependency installers pre-bundled, no internet required post-deploy.",
+                      "plan":  null,
+                      "proofUnits":  [
+
+                                     ],
+                      "branch":  null,
+                      "pr_url":  null
+                  },
+                  {
+                      "number":  16,
+                      "title":  "International PII Scope Expansion",
+                      "description":  "Extend PII detection coverage beyond US-focused entity types to include international and GDPR-scoped identifiers. Activate Presidio\u0027s country-specific built-in recognizers: UK NHS number, AU TFN/Medicare/ABN/ACN, SG NRIC/FIN, EU fiscal codes (IT, ES, FI, PL), and any others supported by Presidio at implementation time. Produce a companion pii_international_coverage.json registry documenting each identifier, jurisdiction, recognizer source, and confidence notes. Depends on Task #9 (US PII foundation) being production.",
+                      "category":  "feature",
+                      "priority":  40,
+                      "impact":  "standard",
+                      "status":  "backlog",
+                      "created_at":  "2026-05-27",
+                      "completedAt":  null,
+                      "dependencies":  [
+                                           9
+                                       ],
+                      "notes":  "Deferred from Task #9 scope decision (2026-05-27): Scott confirmed US-only PII scope for Task #9. International expansion added as a separate backlog item for future consideration. No custom recognizers expected â€” all international types are Presidio built-ins requiring only registration.",
+                      "plan":  null,
+                      "proofUnits":  [
+
+                                     ],
+                      "branch":  null,
+                      "pr_url":  null
+                  }
+              ]
 }
