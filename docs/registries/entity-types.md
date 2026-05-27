@@ -301,6 +301,180 @@ Biometric identifier — text-description patterns ("fingerprint", "voiceprint",
 
 ---
 
+## US PII Entity Types (Task #9 — planned)
+
+The following 8 entity types are Presidio built-in recognizers that will be explicitly registered via `src/scanmenow/detection/recognizers/pii/us_pii.py` in Task #9. They are not yet in code. Entries are marked `⚠ planned` until Task #9 ships.
+
+---
+
+## `CREDIT_CARD`
+
+Credit and debit card numbers — Luhn-validated. Covers Visa, Mastercard, Amex, Discover, and other major networks.
+
+**Source:** Presidio built-in (native) — activated explicitly in Task #9
+**Recognizer:** `presidio_analyzer.predefined_recognizers.CreditCardRecognizer`
+
+**Producers**
+- `src/scanmenow/detection/recognizers/pii/us_pii.py` — explicit instantiation (Task #9) *(planned)*
+- `src/scanmenow/detection/recognizers/__init__.py` — included in `ALL_RECOGNIZERS` via `ALL_PII_RECOGNIZERS` merge (Task #9) *(planned)*
+- `src/scanmenow/detection/analyzer.py` — registered via `build_analyzer()` loop *(planned)*
+
+**Consumers**
+- `tests/test_pii_recognizers.py` — positive + negative assertions (Task #9) *(planned)*
+
+**Collision risk:** None with existing HIPAA recognizers.
+
+**Status:** ⚠ planned — Task #9
+
+---
+
+## `US_BANK_NUMBER`
+
+US bank account and routing numbers.
+
+**Source:** Presidio built-in (native) — activated explicitly in Task #9
+**Recognizer:** `presidio_analyzer.predefined_recognizers.UsBankRecognizer`
+
+**Producers**
+- `src/scanmenow/detection/recognizers/pii/us_pii.py` — explicit instantiation (Task #9) *(planned)*
+- `src/scanmenow/detection/recognizers/__init__.py` — included in `ALL_RECOGNIZERS` via `ALL_PII_RECOGNIZERS` merge (Task #9) *(planned)*
+- `src/scanmenow/detection/analyzer.py` — registered via `build_analyzer()` loop *(planned)*
+
+**Consumers**
+- `tests/test_pii_recognizers.py` — positive + negative assertions (Task #9) *(planned)*
+
+**Collision risk:** Low overlap with `ACCOUNT_NUMBER` (custom HIPAA). Both may fire on account-like strings; Presidio returns all matches. Document in `pii_coverage.json`.
+
+**Status:** ⚠ planned — Task #9
+
+---
+
+## `US_PASSPORT`
+
+US passport numbers (alphanumeric, 9 characters).
+
+**Source:** Presidio built-in (native) — activated explicitly in Task #9
+**Recognizer:** `presidio_analyzer.predefined_recognizers.UsPassportRecognizer`
+
+**Producers**
+- `src/scanmenow/detection/recognizers/pii/us_pii.py` — explicit instantiation (Task #9) *(planned)*
+- `src/scanmenow/detection/recognizers/__init__.py` — included in `ALL_RECOGNIZERS` via `ALL_PII_RECOGNIZERS` merge (Task #9) *(planned)*
+- `src/scanmenow/detection/analyzer.py` — registered via `build_analyzer()` loop *(planned)*
+
+**Consumers**
+- `tests/test_pii_recognizers.py` — positive + negative assertions (Task #9) *(planned)*
+
+**Collision risk:** None with existing HIPAA recognizers.
+
+**Status:** ⚠ planned — Task #9
+
+---
+
+## `US_DRIVER_LICENSE`
+
+US state driver's license numbers. Format varies by state; context-anchored.
+
+**Source:** Presidio built-in (native) — activated explicitly in Task #9
+**Recognizer:** `presidio_analyzer.predefined_recognizers.UsLicenseRecognizer`
+
+**Producers**
+- `src/scanmenow/detection/recognizers/pii/us_pii.py` — explicit instantiation (Task #9) *(planned)*
+- `src/scanmenow/detection/recognizers/__init__.py` — included in `ALL_RECOGNIZERS` via `ALL_PII_RECOGNIZERS` merge (Task #9) *(planned)*
+- `src/scanmenow/detection/analyzer.py` — registered via `build_analyzer()` loop *(planned)*
+
+**Consumers**
+- `tests/test_pii_recognizers.py` — positive + negative assertions (Task #9) *(planned)*
+
+**Collision risk:** ⚠ May overlap with `CERTIFICATE_LICENSE_NUMBER` (custom HIPAA) on license number patterns. Both fire; Presidio returns all. Document collision in `pii_coverage.json`.
+
+**Status:** ⚠ planned — Task #9
+
+---
+
+## `IBAN_CODE`
+
+International Bank Account Number (SWIFT/IBAN format). Common in US financial records even outside EU context.
+
+**Source:** Presidio built-in (native) — activated explicitly in Task #9
+**Recognizer:** `presidio_analyzer.predefined_recognizers.IbanRecognizer`
+
+**Producers**
+- `src/scanmenow/detection/recognizers/pii/us_pii.py` — explicit instantiation (Task #9) *(planned)*
+- `src/scanmenow/detection/recognizers/__init__.py` — included in `ALL_RECOGNIZERS` via `ALL_PII_RECOGNIZERS` merge (Task #9) *(planned)*
+- `src/scanmenow/detection/analyzer.py` — registered via `build_analyzer()` loop *(planned)*
+
+**Consumers**
+- `tests/test_pii_recognizers.py` — positive + negative assertions (Task #9) *(planned)*
+
+**Collision risk:** None with existing HIPAA recognizers.
+
+**Status:** ⚠ planned — Task #9
+
+---
+
+## `CRYPTO`
+
+Cryptocurrency wallet addresses — Bitcoin, Ethereum, and other major chain formats.
+
+**Source:** Presidio built-in (native) — activated explicitly in Task #9
+**Recognizer:** `presidio_analyzer.predefined_recognizers.CryptoRecognizer`
+
+**Producers**
+- `src/scanmenow/detection/recognizers/pii/us_pii.py` — explicit instantiation (Task #9) *(planned)*
+- `src/scanmenow/detection/recognizers/__init__.py` — included in `ALL_RECOGNIZERS` via `ALL_PII_RECOGNIZERS` merge (Task #9) *(planned)*
+- `src/scanmenow/detection/analyzer.py` — registered via `build_analyzer()` loop *(planned)*
+
+**Consumers**
+- `tests/test_pii_recognizers.py` — positive + negative assertions (Task #9) *(planned)*
+
+**Collision risk:** None with existing HIPAA recognizers.
+
+**Status:** ⚠ planned — Task #9
+
+---
+
+## `MEDICAL_LICENSE`
+
+Medical license numbers and NPI (National Provider Identifier) numbers.
+
+**Source:** Presidio built-in (native) — activated explicitly in Task #9
+**Recognizer:** `presidio_analyzer.predefined_recognizers.MedicalLicenseRecognizer`
+
+**Producers**
+- `src/scanmenow/detection/recognizers/pii/us_pii.py` — explicit instantiation (Task #9) *(planned)*
+- `src/scanmenow/detection/recognizers/__init__.py` — included in `ALL_RECOGNIZERS` via `ALL_PII_RECOGNIZERS` merge (Task #9) *(planned)*
+- `src/scanmenow/detection/analyzer.py` — registered via `build_analyzer()` loop *(planned)*
+
+**Consumers**
+- `tests/test_pii_recognizers.py` — positive + negative assertions (Task #9) *(planned)*
+
+**Collision risk:** ⚠ May overlap with `MEDICAL_RECORD_NUMBER` and `CERTIFICATE_LICENSE_NUMBER` (custom HIPAA) on NPI/license number patterns. Both fire; Presidio returns all. Document collision in `pii_coverage.json`.
+
+**Status:** ⚠ planned — Task #9
+
+---
+
+## `NRP`
+
+Nationality, Religion, Political group — detects text mentioning someone's nationality, religious affiliation, or political group. Keyword/phrase detection, not a structured ID format. Best-effort; no hard accuracy threshold in Task #4 benchmark (same treatment as `BIOMETRIC_IDENTIFIER`).
+
+**Source:** Presidio built-in (native) — activated explicitly in Task #9
+**Recognizer:** `presidio_analyzer.predefined_recognizers.NrpRecognizer`
+
+**Producers**
+- `src/scanmenow/detection/recognizers/pii/us_pii.py` — explicit instantiation (Task #9) *(planned)*
+- `src/scanmenow/detection/recognizers/__init__.py` — included in `ALL_RECOGNIZERS` via `ALL_PII_RECOGNIZERS` merge (Task #9) *(planned)*
+- `src/scanmenow/detection/analyzer.py` — registered via `build_analyzer()` loop *(planned)*
+
+**Consumers**
+- `tests/test_pii_recognizers.py` — positive + negative assertions (Task #9) *(planned)*
+
+**Collision risk:** None with existing HIPAA recognizers.
+
+**Status:** ⚠ planned — Task #9
+
+---
+
 ## Summary
 
 | Entity Type | Source | Consumers | Status |
@@ -320,22 +494,35 @@ Biometric identifier — text-description patterns ("fingerprint", "voiceprint",
 | `VEHICLE_IDENTIFIER` | Custom (Task #3) | test_hipaa_recognizers.py | ✓ implemented and tested |
 | `DEVICE_IDENTIFIER` | Custom (Task #3) | test_hipaa_recognizers.py | ✓ implemented and tested |
 | `BIOMETRIC_IDENTIFIER` | Custom (Task #3) | test_hipaa_recognizers.py | ✓ implemented (best-effort) |
+| `CREDIT_CARD` | Native — Task #9 | test_pii_recognizers.py | ⚠ planned |
+| `US_BANK_NUMBER` | Native — Task #9 | test_pii_recognizers.py | ⚠ planned |
+| `US_PASSPORT` | Native — Task #9 | test_pii_recognizers.py | ⚠ planned |
+| `US_DRIVER_LICENSE` | Native — Task #9 | test_pii_recognizers.py | ⚠ planned |
+| `IBAN_CODE` | Native — Task #9 | test_pii_recognizers.py | ⚠ planned |
+| `CRYPTO` | Native — Task #9 | test_pii_recognizers.py | ⚠ planned |
+| `MEDICAL_LICENSE` | Native — Task #9 | test_pii_recognizers.py | ⚠ planned |
+| `NRP` | Native — Task #9 | test_pii_recognizers.py | ⚠ planned (best-effort) |
 
 ---
 
 ## Audit Trail — Proof of Registry Verification
 
-**Last audit:** 2026-05-25T01:00:00Z (by /cross-boundary-audit — Task #3 post-build verification)
+**Last audit:** 2026-05-27T00:00:00Z (by /cross-boundary-audit — Task #9 pre-build plan validation)
 
-**Boundaries checked:** Presidio entity type strings (full code scan — all recognizer modules, __init__, analyzer, tests)
+**Boundaries checked:** Presidio entity type strings (full code scan — all recognizer modules, __init__, analyzer, tests, plus plan review for Task #9 deliverables)
 
 **Evidence recorded:**
-- 9 entries with complete producer/consumer pairs ✓ (`EMAIL_ADDRESS`, `PERSON` — smoke-tested; `MEDICAL_RECORD_NUMBER`, `HEALTH_PLAN_BENEFICIARY`, `ACCOUNT_NUMBER`, `CERTIFICATE_LICENSE_NUMBER`, `VEHICLE_IDENTIFIER`, `DEVICE_IDENTIFIER`, `BIOMETRIC_IDENTIFIER` — Task #3 built and passing)
+- 9 entries with complete producer/consumer pairs ✓ (`EMAIL_ADDRESS`, `PERSON` — smoke-tested; `MEDICAL_RECORD_NUMBER`, `HEALTH_PLAN_BENEFICIARY`, `ACCOUNT_NUMBER`, `CERTIFICATE_LICENSE_NUMBER`, `VEHICLE_IDENTIFIER`, `DEVICE_IDENTIFIER`, `BIOMETRIC_IDENTIFIER` — Task #3 shipped, 27/27 tests passing)
 - 6 entries confirmed native with no bespoke test consumers ✓ (`PHONE_NUMBER`, `US_SSN`, `IP_ADDRESS`, `URL`, `LOCATION`, `DATE_TIME`)
-- 0 planned entries ⚠ — all 7 Task #3 custom types now implemented
-- New identifiers introduced on Task #3 (shipped): `MEDICAL_RECORD_NUMBER`, `HEALTH_PLAN_BENEFICIARY`, `ACCOUNT_NUMBER`, `CERTIFICATE_LICENSE_NUMBER`, `VEHICLE_IDENTIFIER`, `DEVICE_IDENTIFIER`, `BIOMETRIC_IDENTIFIER`
-- Registries match current code diff: ✓ (all 7 custom recognizers present in `src/scanmenow/detection/recognizers/`, registered in `build_analyzer()`, tested in `tests/test_hipaa_recognizers.py` — 27/27 tests passing)
+- 8 planned entries ⚠ — Task #9 PII types registered in advance of build: `CREDIT_CARD`, `US_BANK_NUMBER`, `US_PASSPORT`, `US_DRIVER_LICENSE`, `IBAN_CODE`, `CRYPTO`, `MEDICAL_LICENSE`, `NRP`
+- New identifiers introduced on Task #9 (planned, not yet built): all 8 PII types above
+- Registries match current code diff: ✓ (existing 15 types match code; 8 new types marked planned, no code yet)
 
-**Gaps identified:** none
+**Collision risks documented:**
+- `US_DRIVER_LICENSE` ↔ `CERTIFICATE_LICENSE_NUMBER` — both may fire on license number patterns
+- `MEDICAL_LICENSE` ↔ `MEDICAL_RECORD_NUMBER` and `CERTIFICATE_LICENSE_NUMBER` — overlap on NPI/license patterns
+- `US_BANK_NUMBER` ↔ `ACCOUNT_NUMBER` — overlap on account-like numeric strings
 
-**Status:** ✓ Audit complete (Task #3 post-build)
+**Gaps identified:** 8 planned entries (Task #9 not yet built) — expected, not a problem
+
+**Status:** ✓ Audit complete (Task #9 pre-build plan validation)

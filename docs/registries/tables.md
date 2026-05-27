@@ -115,3 +115,5 @@ One row per detected PII/PHI entity within a scan job.
 - `findings.entity_type` stores custom entity type strings — see `entity-types.md` for the full registry of valid values
 
 **Status:** ✓ Audit complete (pre-build plan validation for Task #5)
+
+**Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no new tables or columns. `findings.entity_type` (TEXT) will automatically store the 8 new PII entity type strings — no schema migration needed. Registry verified — no changes needed.

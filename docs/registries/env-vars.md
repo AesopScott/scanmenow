@@ -213,3 +213,5 @@ Standard GCP authentication env var pointing to a service account JSON key file.
 - `SCANMENOW_LOG_LEVEL` carried 3 consecutive audits without being wired. Recommend either: (a) implement in cli.py startup in the next task that touches cli.py (Task #5 adds `scan` command — natural opportunity), or (b) add a note explicitly deferring it to a later task. Do not carry a 4th time without resolution.
 
 **Status:** ✓ Audit complete (pre-build plan validation for Task #5)
+
+**Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no environment variables. Registry verified — no changes needed. `SCANMENOW_LOG_LEVEL` now carried 4 consecutive audits — flagged for resolution in Task #5 (next task that touches cli.py).

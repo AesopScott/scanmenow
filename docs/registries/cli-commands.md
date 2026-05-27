@@ -159,3 +159,5 @@ Age-based retention policy evaluation and enforcement. Queries findings older th
 - `scanmenow benchmark` pre-registered (Task #4 backlog contract references `--corpus` flag and `SCANMENOW_CORPUS_PATH`; was not in registry)
 
 **Status:** ✓ Audit complete (pre-build plan validation for Task #5) + orchestrator corrections applied
+
+**Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no CLI commands. Registry verified — no changes needed.
