@@ -121,7 +121,7 @@ One file per document. Use the format most natural for that document type. Suppo
 | `.txt` | Plain UTF-8 text | Simplest; use for free-form notes and logs |
 | `.csv` | Comma-separated values | Use for tabular data — patient registers, exported billing |
 | `.docx` | Word (Open XML) | Use for clinical notes, letters, intake forms |
-| `.doc` | Word (legacy binary) | Include at least 1 legacy format document. **Note:** `.doc` requires a system-level tool (`antiword` or LibreOffice headless) — the benchmark will attempt extraction but this format is best-effort. Prefer `.docx` for documents where offset precision matters. |
+| `.doc` | Word (legacy binary) | Fully supported via LibreOffice headless (system install required — see below). Include at least 1 document. |
 | `.xlsx` | Excel (Open XML) | Use for billing records, patient lists |
 | `.xls` | Excel (legacy binary) | Include at least 1 legacy format document. Extracted via `xlrd` (read-only, no formula evaluation). |
 | `.pptx` | PowerPoint (Open XML) | Use for case summary slide decks |
@@ -174,11 +174,36 @@ corpus/
   doc_011_intake_scan.extracted.txt      ← text extracted by OCR engine
 ```
 
-**For Office and text-layer PDF files:** Use a standard extraction library and document the exact tool and command in your delivery notes:
-- Word: `python-docx`
-- Excel: `openpyxl`
-- PowerPoint: `python-pptx`
-- PDF (text layer): `pdfplumber` or `pymupdf`
+**For Office and text-layer PDF files:** Use the extraction library listed below and document the exact tool version in your delivery notes:
+
+| Format | Library / tool | Notes |
+|---|---|---|
+| `.docx` | `python-docx` | Iterates paragraphs and table cells; joins with `\n` |
+| `.doc` | LibreOffice headless | Convert to `.txt` via subprocess (see command below); requires LibreOffice system install |
+| `.xlsx` | `openpyxl` | Reads cell values row by row across all sheets |
+| `.xls` | `xlrd` | Read-only; same row-by-row approach |
+| `.pptx` | `python-pptx` | Reads text frames across all slides |
+| `.pdf` (text layer) | `pdfplumber` | Extracts text page by page; concatenate with `\n` |
+
+**`.doc` extraction command (use exactly):**
+
+```python
+import subprocess, pathlib, tempfile, shutil
+
+def extract_doc(doc_path: str) -> str:
+    """Extract plain text from a legacy .doc file via LibreOffice headless."""
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(
+            ["soffice", "--headless", "--convert-to", "txt:Text",
+             "--outdir", tmp, doc_path],
+            check=True, capture_output=True,
+        )
+        stem = pathlib.Path(doc_path).stem
+        txt_path = pathlib.Path(tmp) / f"{stem}.txt"
+        return txt_path.read_text(encoding="utf-8", errors="replace")
+```
+
+Run LibreOffice version `≥ 7.4`. Document the exact version used in your delivery notes — LibreOffice's `.doc` text extraction is deterministic across patch releases within a minor version but may vary across minor versions.
 
 **For image files and scanned PDFs:** The extraction must use the same OCR engine that ScanMeNow Task D will use — **Tesseract via `pytesseract`**, English language pack (`eng`), default PSM. Run OCR exactly as follows so offsets match what the benchmark will produce:
 
@@ -330,7 +355,7 @@ Before submitting the corpus:
 - [ ] At least 15 documents in `corpus/` covering all required formats
 - [ ] At least one document in each of: `.txt`, `.csv`, `.docx`, `.doc`, `.xlsx`, `.xls`, `.pptx`, `.pdf` (text-layer), `.png`, `.jpg`, `.tiff`, `.bmp`, `.pdf` (image-only/scanned)
 - [ ] Every non-plaintext document has a companion `.extracted.txt` file
-- [ ] Office and text-PDF extractions use the specified libraries (python-docx, openpyxl, python-pptx, pdfplumber/pymupdf)
+- [ ] Office and text-PDF extractions use the specified libraries: `python-docx` (`.docx`), LibreOffice headless ≥ 7.4 (`.doc`), `xlrd` (`.xls`), `openpyxl` (`.xlsx`), `python-pptx` (`.pptx`), `pdfplumber` (`.pdf` text-layer)
 - [ ] Image and scanned-PDF extractions use **Tesseract via pytesseract**, `lang="eng"`, default PSM, exactly as shown in the spec
 - [ ] Extraction tool, version, and exact command documented in delivery notes for every format
 - [ ] Every identifier type appears in ≥ 3 findings across ≥ 2 documents

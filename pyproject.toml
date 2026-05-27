@@ -17,8 +17,13 @@ dependencies = [
     "pdfplumber>=0.11.0",       # .pdf with text layer
     # --- OCR (Task #5 filesystem walker — image files + scanned PDFs) ---
     "pytesseract>=0.3.10",      # Tesseract OCR wrapper; requires Tesseract system install
-    "Pillow>=10.0.0",           # Image handling (required by pytesseract)
+    "pillow>=10.0.0",           # Image handling (required by pytesseract)
     "pdf2image>=1.17.0",        # Scanned PDF → image pages; requires Poppler system install
+    "pdfminer-six>=20251230",   # PDF text extraction fallback
+    # NOTE — system installs required (not Python packages):
+    #   Tesseract OCR  : https://github.com/tesseract-ocr/tesseract
+    #   Poppler        : https://poppler.freedesktop.org  (for pdf2image)
+    #   LibreOffice ≥7.4: https://www.libreoffice.org    (for .doc legacy extraction)
 ]
 
 [project.scripts]
