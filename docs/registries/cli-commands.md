@@ -182,3 +182,26 @@ Age-based retention policy evaluation and enforcement. Queries findings older th
 - Arguments: `<path>`, `--depth`, `--skip`, `--follow-symlinks`, `--include-hidden`, `--output`, `--format`
 
 **Status:** ✓ Build-start audit complete (Task #5)
+
+---
+
+**Pre-build audit — 2026-05-27T18:00:00Z (by /cross-boundary-audit — Task #8 baseline)**
+
+**Branch:** main (pre-Task #8 code; Task #5 build-started in parallel worktree)
+
+**Boundaries checked:** All CLI commands — `cli.py` full read, `pyproject.toml [project.scripts]`
+
+**Evidence recorded:**
+- `scanmenow` (root): `cli.py:7` `app = typer.Typer(no_args_is_help=True)` + `pyproject.toml [project.scripts]` → `scanmenow = "scanmenow.cli:app"` ✓ — unchanged
+- `scanmenow scan <path>`: absent from `cli.py` ⚠ — pre-registered for Task #5; expected
+- `scanmenow benchmark`: absent from `cli.py` ⚠ — pre-registered for Task #4; expected
+- `scanmenow retain`: absent from `cli.py` ⚠ — pre-registered for Task #8; expected
+- 0 mismatches on implemented entries
+- 0 new commands found in code that are not in the registry
+
+**New identifiers Task #8 will introduce (to verify at post-build audit):**
+- `scanmenow retain` — `cli.py` `@app.command()` Typer subcommand
+- Arguments: `--max-age-days INT` (default 90), `--dry-run` / `--confirm` (default dry-run)
+- Implementation: calls `get_repository()` → `evaluate_retention(repo, policy)` → prints `RetentionReport`
+
+**Status:** ✓ Pre-build audit complete (Task #8 baseline)

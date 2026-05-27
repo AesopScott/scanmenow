@@ -144,3 +144,35 @@ One row per detected PII/PHI entity within a scan job.
 - `source_line` added to `CSV_HEADERS` — `repository.py`
 
 **Status:** ✓ Build-start audit complete (Task #5)
+
+---
+
+**Pre-build audit — 2026-05-27T18:00:00Z (by /cross-boundary-audit — Task #8 baseline)**
+
+**Branch:** main (pre-Task #8 code; Task #5 build-started in parallel worktree)
+
+**Boundaries checked:** All SQLite tables — full code scan of `src/` and `tests/`
+
+**Evidence recorded:**
+- `scan_jobs`: `db.py:44-50` schema matches registry exactly ✓ — `job_id`, `source_path`, `status`, `created_at`, `completed_at`
+- `findings`: `db.py:52-62` current columns match registry current-schema section exactly ✓ — `finding_id`, `job_id`, `entity_type`, `start`, `end`, `score`, `text_snippet`, `source_file`
+- `CSV_HEADERS` lock order in `repository.py:10` matches documented order exactly ✓
+- `findings.source_line` absent from code ⚠ — pre-registered for Task #5; expected
+- `findings.created_at` absent from code ⚠ — pre-registered for Task #8; expected; Task #8 adds via `ALTER TABLE findings ADD COLUMN created_at TEXT NOT NULL DEFAULT ''` in `init_db()`
+- `get_overlapping_findings()` absent from `repository.py` ⚠ — pre-registered for Task #5; expected
+- 0 shape mismatches on implemented entries
+
+**New identifiers Task #8 will introduce (to verify at post-build audit):**
+- `findings.created_at TEXT NOT NULL DEFAULT ''` column — `db.py` `init_db()` ALTER TABLE migration (idempotent — catches `OperationalError` for duplicate column)
+- `Finding.created_at` field — `models.py` (default factory `_now_iso()`)
+- `created_at` in `save_finding()` INSERT — `repository.py`
+- `created_at` populated in `get_findings_for_job()` — `repository.py`
+- `get_findings_older_than(days: int) -> list[Finding]` — new method on `SqliteRepository` and `Repository` protocol
+- `delete_finding(finding_id: str) -> None` — new method on `SqliteRepository` and `Repository` protocol
+
+**New boundary kind to register post-code:**
+- Firestore collections (`scan_jobs`, `findings`) — Task #8 introduces a cloud storage parallel. No Firestore code exists yet; a `firestore-collections.md` registry should be created as part of the Task #8 post-build audit before `/finish-build`.
+
+**Hard mandate carried from Task #5:** `SCANMENOW_LOG_LEVEL` must be wired in `cli.py` before Task #5 PR opens — not a Task #8 concern but noted for Task #5 completion.
+
+**Status:** ✓ Pre-build audit complete (Task #8 baseline)
