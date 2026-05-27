@@ -1,4 +1,4 @@
-"""Data models for scanmenow storage layer."""
+﻿"""Data models for scanmenow storage layer."""
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -37,3 +37,4 @@ class Finding:
     score: float = 0.0
     text_snippet: str = ""
     source_file: str = ""
+    created_at: str = field(default_factory=_now_iso)

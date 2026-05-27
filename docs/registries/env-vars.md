@@ -215,3 +215,18 @@ Standard GCP authentication env var pointing to a service account JSON key file.
 **Status:** ✓ Audit complete (pre-build plan validation for Task #5)
 
 **Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no environment variables. Registry verified — no changes needed. `SCANMENOW_LOG_LEVEL` now carried 4 consecutive audits — flagged for resolution in Task #5 (next task that touches cli.py).
+
+
+**Task #8 CBA update (2026-05-27):** `SCANMENOW_BACKEND`, `SCANMENOW_FIRESTORE_PROJECT`, and `GOOGLE_APPLICATION_CREDENTIALS` are now **✓ implemented** in `storage/base.py` and `cloud/client.py`. `SCANMENOW_FIRESTORE_EMULATOR_HOST` is read by the GCP SDK automatically (no code needed). Summary row updated below.
+
+| Variable | Required | Default | Consumers | Status |
+|----------|----------|---------|-----------|--------|
+| `SCANMENOW_DB_PATH` | no | `~/.scanmenow/scanmenow.db` | storage/db.py | ✓ implemented |
+| `SCANMENOW_LOG_LEVEL` | no | `INFO` | cli.py or __init__.py | ⚠ planned — not yet consumed (5th carry) |
+| `TESSERACT_CMD` | no | platform-detected | walker/reader.py (planned) | ⚠ planned Task #5 |
+| `LIBREOFFICE_CMD` | no | platform-detected | walker/reader.py (planned) | ⚠ planned Task #5 |
+| `SCANMENOW_CORPUS_PATH` | no | none (skips gracefully) | benchmark/runner.py (planned) | ⚠ planned Task #4 |
+| `SCANMENOW_BACKEND` | no | `sqlite` | storage/base.py | ✓ implemented (Task #8) |
+| `SCANMENOW_FIRESTORE_PROJECT` | no | none (required if backend=firestore) | cloud/client.py | ✓ implemented (Task #8) |
+| `GOOGLE_APPLICATION_CREDENTIALS` | no | GCP default | cloud/client.py | ✓ implemented (Task #8 — via GCP SDK) |
+| `SCANMENOW_FIRESTORE_EMULATOR_HOST` | no | none (production) | GCP SDK auto-reads | ✓ implemented (Task #8 — SDK built-in) |

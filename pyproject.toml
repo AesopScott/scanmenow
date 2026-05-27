@@ -26,6 +26,13 @@ dependencies = [
     #   LibreOffice ≥7.4: https://www.libreoffice.org    (for .doc legacy extraction)
 ]
 
+[project.optional-dependencies]
+# Install cloud extras to enable Firestore backend:
+#   pip install scanmenow[cloud]
+cloud = [
+    "google-cloud-firestore>=2.16",
+]
+
 [project.scripts]
 scanmenow = "scanmenow.cli:app"
 

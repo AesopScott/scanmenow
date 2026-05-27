@@ -117,3 +117,24 @@ One row per detected PII/PHI entity within a scan job.
 **Status:** ✓ Audit complete (pre-build plan validation for Task #5)
 
 **Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no new tables or columns. `findings.entity_type` (TEXT) will automatically store the 8 new PII entity type strings — no schema migration needed. Registry verified — no changes needed.
+
+---
+
+## Task #8 Update — `findings.created_at` column added
+
+**Date:** 2026-05-27
+
+The `findings` table gained a `created_at` column via idempotent `ALTER TABLE` migration in `init_db()`.
+
+| Column | Type | Nullable | Default | Notes |
+|--------|------|----------|---------|-------|
+| `created_at` | TEXT (ISO 8601) | no | `""` | empty string = "keep" (conservative retention default) |
+
+**Migration:** `ALTER TABLE findings ADD COLUMN created_at TEXT NOT NULL DEFAULT ''`
+Guarded with `sqlite3.OperationalError` catch — safe to run on existing databases.
+
+**New functions added to `repository.py`:**
+- `get_findings_older_than(days, db_path)` — queries `WHERE created_at != '' AND created_at < cutoff`
+- `delete_finding(finding_id, db_path)` — deletes by primary key
+
+**Model updated:** `Finding.created_at: str` field added with `default_factory=_now_iso`

@@ -161,3 +161,13 @@ Age-based retention policy evaluation and enforcement. Queries findings older th
 **Status:** ✓ Audit complete (pre-build plan validation for Task #5) + orchestrator corrections applied
 
 **Task #9 audit note (2026-05-27T00:00:00Z):** Task #9 adds no CLI commands. Registry verified — no changes needed.
+
+**Task #8 CBA update (2026-05-27):** `scanmenow retain` is now **✓ implemented** in `cli.py` with `--max-age-days`, `--dry-run/--confirm`, and `--backend` flags. Summary updated below.
+
+| Command | Declared | Implemented | Status |
+|---------|----------|-------------|--------|
+| `scanmenow` (root) | pyproject.toml | cli.py | ✓ implemented |
+| `scanmenow scan <path>` | cli.py (planned) | scanner.py, walker/ (planned) | ⚠ planned Task #5 |
+| `scanmenow benchmark` | cli.py (planned) | benchmark/runner.py (planned) | ⚠ planned Task #4 |
+| `scanmenow retain` | cli.py | retention/evaluator.py | ✓ implemented (Task #8) |
+| `scanmenow reduce` | — | — | ⚠ placeholder — Phase 2 |
