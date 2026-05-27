@@ -348,6 +348,67 @@ The following thresholds define a passing build. Do not adjust your corpus to hi
 
 ---
 
+## How Your Corpus Will Be Used — Benchmark Runner Architecture
+
+This section describes how the engineering team will consume the corpus you produce. Understanding this helps you write documents and offsets that will work correctly.
+
+### Three-layer architecture
+
+```
+src/scanmenow/benchmark/
+  runner.py      ← core logic: loads corpus, runs analyzer, computes metrics
+  report.py      ← formats results as terminal table or JSON file
+
+tests/
+  test_benchmark.py   ← pytest wrapper: skips if corpus not present,
+                         asserts thresholds when it is
+
+CLI:
+  scanmenow benchmark --corpus ./corpus [--output report.json]
+```
+
+**`runner.py`** is the engine. For each document in `golden_findings.json` it:
+1. Extracts plain text from the source file using the same extraction stack described in this spec (python-docx for `.docx`, LibreOffice headless for `.doc`, pytesseract for images, etc.)
+2. Runs `build_analyzer()` on the extracted text
+3. Compares the analyzer's output spans against your golden `findings[]`, allowing a configurable character-offset tolerance for OCR-derived documents (default ±5 chars)
+4. Records true positives, false negatives, and false positives (matched against `decoys[]`)
+5. Returns a `BenchmarkResult` dataclass with per-type recall, precision, and false-positive rate
+
+**`tests/test_benchmark.py`** calls the runner and fails CI if any required entity type falls below its threshold. It uses `pytest.mark.skipif` — if the `corpus/` directory is not present, the test silently skips rather than erroring. This means normal development runs are unaffected; the benchmark only gates CI once the corpus is delivered and placed in the expected path.
+
+**`scanmenow benchmark --corpus ./corpus`** calls the same runner and prints a formatted table to the terminal:
+
+```
+Entity Type                   Recall    Precision   FP Rate   Threshold   Status
+─────────────────────────────────────────────────────────────────────────────────
+EMAIL_ADDRESS                  97%        99%         1%         90%       ✓ PASS
+US_SSN                         94%        100%        0%         90%       ✓ PASS
+PERSON                         71%        83%         9%         75%       ✗ FAIL
+MEDICAL_RECORD_NUMBER          68%        61%        22%         65%       ✓ PASS
+BIOMETRIC_IDENTIFIER           38%        n/a         n/a        none      ~ (no threshold)
+─────────────────────────────────────────────────────────────────────────────────
+Result: 1 type below threshold (PERSON)
+```
+
+This CLI command is also what you should run against your corpus **before delivery** to verify your offsets and coverage produce sensible results. You can install the tool locally with `uv pip install -e .` in the project directory (requires Python ≥ 3.11 and uv).
+
+### Offset matching
+
+For text-native formats (`.txt`, `.csv`, `.docx`, `.xlsx`, `.pptx`, `.pdf` text-layer, `.doc`), the benchmark matches exact character offsets — `text[start:end]` must equal `findings[].text` exactly.
+
+For OCR-derived formats (`.png`, `.jpg`, `.tiff`, `.bmp`, `.pdf` image-only), the benchmark applies a **±5 character tolerance** on span boundaries. OCR output is deterministic given the same engine and config, but whitespace normalisation can shift offsets by a few characters. This tolerance is why the spec requires you to produce `.extracted.txt` companions using exactly the Tesseract configuration described above — if you use a different config, even the ±5 tolerance may not save you.
+
+### What "false positive" means in the benchmark
+
+A false positive is an engine finding that does **not** match any entry in `findings[]` or `decoys[]` for that document. Decoys let you distinguish between:
+
+- **Intentional near-miss:** the engine flagged a decoy — expected noise, counted separately
+- **Unexpected false positive:** the engine flagged something that isn't in either list — uncontrolled noise
+
+This is why the near-miss decoy requirement exists: without `decoys[]`, every unexpected engine hit looks the same as a known near-miss, and precision measurements are meaningless.
+
+---
+
 ## Delivery Checklist
 
 Before submitting the corpus:
