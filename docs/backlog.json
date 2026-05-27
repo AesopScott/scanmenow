@@ -18,6 +18,7 @@
         9,
         10
       ],
+      "notes": "PII THRESHOLD POLICY (2026-05-27): Task C must define separate benchmark thresholds for each PII entity label instead of reusing PHI/HIPAA thresholds wholesale. Task G defines the activated PII label set, including CRYPTO and NRP; Task H supplies corpus coverage. Task C owns per-label PII recall/precision thresholds and should document any labels with no hard threshold or best-effort treatment.",
       "plan": null,
       "proofUnits": [],
       "branch": null,
