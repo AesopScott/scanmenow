@@ -46,7 +46,7 @@ Scan a local directory or file for PHI/PII. Walks the filesystem, reads all supp
 **Default skip patterns** (applied before `--skip` additions):
 `.git`, `__pycache__`, `.venv`, `node_modules`, `dist`, `build`, `*.pyc`, `*.log`, `*.tmp`
 
-**Supported file formats:** `.txt`, `.csv`, `.json`, `.pdf`, `.docx`, `.xlsx`, `.pptx`, `.doc`, `.png`, `.jpg`, `.jpeg`, `.gif`
+**Supported file formats:** `.txt`, `.csv`, `.json`, `.pdf`, `.docx`, `.xlsx`, `.pptx`, `.doc`, `.png`, `.jpg`, `.jpeg`, `.tiff`, `.tif`, `.bmp`, `.gif`
 
 **Output behavior:** Silent during scan; prints a progress line only for files with findings. Prints summary table at end (files scanned, files with findings, total findings, job ID, DB path).
 
@@ -66,6 +66,35 @@ Scan a local directory or file for PHI/PII. Walks the filesystem, reads all supp
 
 ---
 
+## `scanmenow benchmark` ⚠ planned (Task #4)
+
+Run the benchmark accuracy gate against an independent corpus. Reads golden findings from the corpus, runs the detection engine, and reports recall/precision per entity type.
+
+**Arguments / options:**
+- `--corpus PATH` / `-c PATH` — corpus directory; overrides `SCANMENOW_CORPUS_PATH` env var
+- `--format csv|json` / `-f` — report output format (default: `json`)
+- `--output FILE` / `-o FILE` — write report to file (default: stdout)
+- `--threshold-file PATH` — override `docs/benchmark_thresholds.json` (default: repo path)
+
+**Environment variable:** `SCANMENOW_CORPUS_PATH` — persistent corpus path; `--corpus` overrides per-run
+
+**Graceful skip:** If neither `--corpus` nor `SCANMENOW_CORPUS_PATH` is set, exits 0 with "corpus not found — skipping benchmark" (CI-safe).
+
+**Declaration (producer)**
+- `src/scanmenow/cli.py` — `@app.command()` Typer subcommand ⚠ planned Task #4
+
+**Implementation (producer)**
+- `src/scanmenow/benchmark/runner.py` — `run_benchmark()` ⚠ planned Task #4
+- `src/scanmenow/benchmark/report.py` — `render_report()` ⚠ planned Task #4
+- `docs/benchmark_thresholds.json` — per-label recall thresholds (Task #4 owns, already written)
+
+**Consumers**
+- `tests/test_benchmark.py` — CI accuracy gate ⚠ planned Task #4
+
+**Status:** ⚠ planned — Task #4; not yet implemented
+
+---
+
 ## Future subcommands (post-Task #5)
 
 | Command | Planned in | Description |
@@ -81,6 +110,7 @@ Scan a local directory or file for PHI/PII. Walks the filesystem, reads all supp
 |---------|----------|-------------|--------|
 | `scanmenow` (root) | pyproject.toml | cli.py | ✓ implemented |
 | `scanmenow scan <path>` | cli.py (planned) | scanner.py, walker/ (planned) | ⚠ planned Task #5 |
+| `scanmenow benchmark` | cli.py (planned) | benchmark/runner.py (planned) | ⚠ planned Task #4 |
 | `scanmenow reduce` | — | — | ⚠ placeholder — Phase 2 |
 
 ---
@@ -88,15 +118,19 @@ Scan a local directory or file for PHI/PII. Walks the filesystem, reads all supp
 ## Audit Trail — Proof of Registry Verification
 
 **Last audit:** 2026-05-27T00:00:00Z (by /cross-boundary-audit — pre-build plan validation for Task #5)
+**Correction:** 2026-05-27 (orchestrator cross-session sync — added TIFF/BMP formats and benchmark command)
 
-**Boundaries checked:** CLI entry points (verified against Task #5 plan — `scanmenow scan` pre-registered with full argument spec)
+**Boundaries checked:** CLI entry points (verified against Task #5 plan — `scanmenow scan` pre-registered with full argument spec; `scanmenow benchmark` pre-registered per Task #4 backlog contracts)
 
 **Evidence recorded:**
 - 1 entry with complete producer/consumer pairs ✓ (`scanmenow` root — unchanged)
 - 0 shape mismatches
 - New identifiers introduced on Task #5 (pre-registered): `scanmenow scan <path>` with full argument spec
-- Registries match current code diff: ✓ (current code) · ⚠ `scanmenow scan` pre-registered, not yet in code
+- New identifiers introduced on Task #4 (pre-registered): `scanmenow benchmark` with `--corpus`, `--format`, `--output`, `--threshold-file` args
+- Registries match current code diff: ✓ (current code) · ⚠ `scanmenow scan` and `scanmenow benchmark` pre-registered, not yet in code
 
-**Gaps identified:** none in current code; `scanmenow scan` pre-registered for Task #5 build
+**Corrections applied:**
+- `scanmenow scan` supported formats: added `.tiff`, `.tif`, `.bmp` (backlog correction `6f57cfce` stated these are required; cross-boundary-audit missed them)
+- `scanmenow benchmark` pre-registered (Task #4 backlog contract references `--corpus` flag and `SCANMENOW_CORPUS_PATH`; was not in registry)
 
-**Status:** ✓ Audit complete (pre-build plan validation for Task #5)
+**Status:** ✓ Audit complete (pre-build plan validation for Task #5) + orchestrator corrections applied

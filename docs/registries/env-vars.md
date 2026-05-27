@@ -94,6 +94,30 @@ Overrides the LibreOffice headless binary path used for `.doc` legacy file extra
 
 ---
 
+## `SCANMENOW_CORPUS_PATH`
+
+Path to the independent benchmark corpus directory produced by Task H.
+
+**Type:** string (directory path)
+**Required:** no — benchmark runner skips gracefully if unset (CI does not fail on missing corpus)
+**Default:** none — must be set explicitly or overridden by `--corpus` CLI argument
+**Example:** `/data/scanmenow-corpus` or `./corpus`
+
+**Producers (who sets it)**
+- Shell / `.env` file — operator sets before running benchmarks
+- CI pipeline — sets to mounted corpus path for accuracy gate runs
+
+**Consumers (who reads it)**
+- `src/scanmenow/benchmark/runner.py` — reads at startup to locate corpus; falls back to `--corpus` CLI arg; skips benchmark gracefully if neither is set ⚠ planned Task #4
+
+**Adjacent constraint — Graceful CI skip:** If `SCANMENOW_CORPUS_PATH` is unset and no `--corpus` arg is given, the benchmark runner must exit 0 with a clear "corpus not found, skipping" message rather than failing. This allows CI to run without a corpus during Tasks #3/#5/#9 build phases.
+
+**Adjacent constraint — CLI override:** `scanmenow benchmark --corpus <path>` overrides `SCANMENOW_CORPUS_PATH` for a single run. The env var is the persistent default; the CLI arg is the per-run override.
+
+**Status:** ⚠ planned — Task #4; env var documented pre-build so registry is ready before code lands
+
+---
+
 ## Summary
 
 | Variable | Required | Default | Consumers | Status |
@@ -102,6 +126,7 @@ Overrides the LibreOffice headless binary path used for `.doc` legacy file extra
 | `SCANMENOW_LOG_LEVEL` | no | `INFO` | cli.py or __init__.py | ⚠ planned — not yet consumed (3rd carry) |
 | `TESSERACT_CMD` | no | platform-detected | walker/reader.py (planned) | ⚠ planned Task #5 |
 | `LIBREOFFICE_CMD` | no | platform-detected | walker/reader.py (planned) | ⚠ planned Task #5 |
+| `SCANMENOW_CORPUS_PATH` | no | none (skips gracefully) | benchmark/runner.py (planned) | ⚠ planned Task #4 |
 
 ---
 
