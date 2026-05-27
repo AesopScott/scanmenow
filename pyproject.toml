@@ -9,6 +9,16 @@ dependencies = [
     "presidio-analyzer>=2.2.0",
     "presidio-anonymizer>=2.2.0",
     "spacy>=3.7.0",
+    # --- Document text extraction (Task #4 benchmark runner + Task #5 filesystem walker) ---
+    "python-docx>=1.1.0",       # .docx (Word Open XML)
+    "openpyxl>=3.1.0",          # .xlsx (Excel Open XML)
+    "xlrd>=2.0.1",              # .xls (Excel legacy binary — read-only)
+    "python-pptx>=0.6.23",      # .pptx (PowerPoint Open XML)
+    "pdfplumber>=0.11.0",       # .pdf with text layer
+    # --- OCR (Task #5 filesystem walker — image files + scanned PDFs) ---
+    "pytesseract>=0.3.10",      # Tesseract OCR wrapper; requires Tesseract system install
+    "Pillow>=10.0.0",           # Image handling (required by pytesseract)
+    "pdf2image>=1.17.0",        # Scanned PDF → image pages; requires Poppler system install
 ]
 
 [project.scripts]

@@ -3,7 +3,7 @@
     {
       "number": 4,
       "title": "Group C - Synthetic PHI Corpus & Golden Findings",
-      "description": "Build synthetic PHI test corpus covering all 18 identifiers with golden findings JSON for validation and accuracy benchmarking (22 subtasks)",
+      "description": "Build synthetic PHI test corpus covering the 15 unique detectable HIPAA identifier labels (16 HIPAA rows, but phone and fax share PHONE_NUMBER; photos and catch-all are out of scope) with golden findings JSON and a benchmark runner for validation, accuracy benchmarking, and regression-guarding",
       "category": "feature",
       "priority": 98,
       "status": "backlog",
@@ -33,7 +33,7 @@
       "created_at": "2026-05-23",
       "completed_at": null,
       "dependencies": [],
-      "notes": "Hardening concern carried from Task #3 dual review (Claude Sonnet 4.6 + Codex GPT-5, 2026-05-26): when the filesystem walker pipes findings through the detection layer, expand the recognizer collision tests from 'at least one entity fires' into expected entity/span precedence behaviour. A numeric token can match MEDICAL_RECORD_NUMBER, ACCOUNT_NUMBER, and DEVICE_IDENTIFIER simultaneously; if downstream redaction or reporting logic needs deterministic entity precedence over overlapping PHI spans, that dedup/priority contract must be defined and tested here rather than left implicit.",
+      "notes": "Hardening concern carried from Task #3 dual review (Claude Sonnet 4.6 + Codex GPT-5, 2026-05-26): when the filesystem walker pipes findings through the detection layer, expand the recognizer collision tests from 'at least one entity fires' into expected entity/span precedence behaviour. A numeric token can match MEDICAL_RECORD_NUMBER, ACCOUNT_NUMBER, and DEVICE_IDENTIFIER simultaneously; if downstream redaction or reporting logic needs deterministic entity precedence over overlapping PHI spans, that dedup/priority contract must be defined and tested here rather than left implicit. OCR SCOPE ADDITION (2026-05-27): Task D now includes OCR capability for image-format files (PNG, JPG, TIFF, BMP) and image-only scanned PDFs. OCR engine: Tesseract via pytesseract, lang=eng, default PSM. The filesystem walker must detect file type and route image files through OCR text extraction before running the detection engine. The Group C corpus spec (docs/GROUP-C-CORPUS-SPEC.md) pins the exact OCR extraction command so corpus golden-finding offsets and benchmark extraction are consistent.",
       "plan": null,
       "proofUnits": [],
       "branch": null,
