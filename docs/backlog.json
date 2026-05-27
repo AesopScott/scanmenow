@@ -6,7 +6,7 @@
       "description": "Build the benchmark runner, reporting surface, and CI accuracy gate that validate ScanMeNow detection against independent PHI/PII testing data. Task C consumes Task D extraction/OCR support, Task G PII capability, and Task H independent testing data.",
       "category": "feature",
       "priority": 98,
-      "status": "backlog",
+      "status": "planned",
       "impact": "standard",
       "phase": null,
       "phase_task": null,
@@ -19,8 +19,84 @@
         10
       ],
       "notes": "PII THRESHOLD POLICY (2026-05-27): Task C must define separate benchmark thresholds for each PII entity label instead of reusing PHI/HIPAA thresholds wholesale. Task G defines the activated PII label set, including CRYPTO and NRP; Task H supplies corpus coverage. Task C owns per-label PII recall/precision thresholds and should document any labels with no hard threshold or best-effort treatment. Thresholds are now written — read docs/benchmark_thresholds.json, which is the authoritative source the runner enforces. --- ARCHITECTURE NOTES (orchestrator, 2026-05-27): (1) EXTRACTION STACK: Task C's runner.py must import Task D's extraction stack directly (src/scanmenow/walker/reader.py) — do not duplicate extraction logic. Same code path = same extracted text = same offsets as corpus. (2) PDF LIBRARY: pdfplumber is authoritative for text-layer PDF extraction across the whole project. Task D uses it, Task H corpus was produced with it, Task C must inherit it via the shared reader. (3) CORPUS PATH: SCANMENOW_CORPUS_PATH env var sets corpus location; --corpus CLI arg overrides; pytest gate skips gracefully if env var unset (do not fail CI on missing corpus). (4) TOLERANCE: exact char offset match for text-native formats; ±5 char tolerance for OCR-derived formats (PNG/JPG/TIFF/BMP/scanned PDF). --- ARCHITECTURAL DEPENDENCY CONTRACTS (2026-05-27): Task C is a CONSUMER of three cross-task contracts. CONTRACT 1 — build_analyzer() [Owner: Task #3 + Task G (#9)]: import build_analyzer() from src/scanmenow/detection/analyzer.py and call it once per benchmark run. Do NOT re-register recognizers inside runner.py. Task G (#9) will have already merged all 8 PII recognizers into this factory before Task C runs; they appear automatically. CONTRACT 2 — read_file_text(path) [Owner: Task D (#5)]: import read_file_text(path: Path) -> str from src/scanmenow/walker/reader.py and use it for all corpus text extraction in the benchmark runner. Do NOT duplicate any format-handling logic — this is the hard coupling that keeps corpus golden-finding offsets consistent with production scanning offsets. CONTRACT 3 — docs/benchmark_thresholds.json [Owner: Task C (#4), this task]: the runner reads this file at startup; no thresholds are hardcoded in runner.py. Adding a new entity type means adding a row to the JSON; the runner picks it up with no code change. min_recall: null + hard_threshold: false = best-effort, reported only, never fails CI.",
-      "plan": null,
-      "proofUnits": [],
+      "objective": {
+        "statement": "Deliver a benchmark runner that loads an independent corpus, extracts text through Task D's shared reader, analyzes text through build_analyzer(), compares analyzer spans against golden findings and decoys, applies per-entity thresholds from docs/benchmark_thresholds.json, and exposes both a CLI command and pytest gate.",
+        "successCriteria": [
+          "Threshold loader reads docs/benchmark_thresholds.json and supports hard-threshold and report-only labels",
+          "Span matcher supports exact text-native matching, +/-5 OCR tolerance, and decoy-aware false-positive accounting",
+          "Runner imports shared read_file_text(path) and build_analyzer() contracts instead of duplicating extraction or recognizer registration",
+          "scanmenow benchmark --corpus <path> [--output report.json] prints a terminal report and optionally writes JSON",
+          "tests/test_benchmark.py skips gracefully when corpus is absent and enforces configured hard thresholds when corpus is present"
+        ],
+        "nonGoals": [
+          "Producing the independent corpus, golden findings, or extracted text companions - Task H",
+          "Implementing file extraction, OCR, or format readers - Task D",
+          "Registering PHI/PII recognizers - Task G and prior HIPAA recognizer work",
+          "Installing Tesseract or LibreOffice - Task #12",
+          "Redaction, reduction, migration, retention, or UI work"
+        ],
+        "proofMap": [
+          {"criterion": "Threshold loader reads docs/benchmark_thresholds.json and supports hard-threshold and report-only labels", "proofUnit": 1},
+          {"criterion": "Span matcher supports exact text-native matching, +/-5 OCR tolerance, and decoy-aware false-positive accounting", "proofUnit": 2},
+          {"criterion": "Runner imports shared read_file_text(path) and build_analyzer() contracts instead of duplicating extraction or recognizer registration", "proofUnit": 3},
+          {"criterion": "scanmenow benchmark --corpus <path> [--output report.json] prints a terminal report and optionally writes JSON", "proofUnit": 4},
+          {"criterion": "tests/test_benchmark.py skips gracefully when corpus is absent and enforces configured hard thresholds when corpus is present", "proofUnit": 5}
+        ],
+        "stopConditions": [
+          "docs/benchmark_thresholds.json is missing or invalid",
+          "Task D does not expose read_file_text(path)",
+          "Task G has not registered PII recognizers into build_analyzer() before full corpus benchmarking",
+          "Task H corpus format diverges from docs/GROUP-C-CORPUS-SPEC.md"
+        ]
+      },
+      "plan": "scanmenow_Build/Tasks/Task-4-group-c-benchmark-runner-accuracy-gate.md",
+      "proofUnits": [
+        {
+          "number": 1,
+          "title": "Threshold registry loading",
+          "expectedBehavior": "Threshold registry loads all labels from docs/benchmark_thresholds.json; hard-threshold and report-only labels are represented correctly.",
+          "proofType": "failing-test",
+          "exactCommand": "uv run pytest tests/test_benchmark.py::test_threshold_registry_loads -v",
+          "expectedInitialFailure": "ModuleNotFoundError or test file does not exist",
+          "expectedPassingEvidence": "1 passed - threshold registry loads and distinguishes hard-threshold from report-only labels"
+        },
+        {
+          "number": 2,
+          "title": "Span matching and decoy accounting",
+          "expectedBehavior": "Exact spans match, OCR tolerance matches within +/-5 characters, out-of-tolerance spans miss, and decoy hits are tracked separately from uncontrolled false positives.",
+          "proofType": "failing-test",
+          "exactCommand": "uv run pytest tests/test_benchmark.py::test_span_matching_exact_tolerance_and_decoys -v",
+          "expectedInitialFailure": "Matching function does not exist",
+          "expectedPassingEvidence": "1 passed - exact matching, OCR tolerance, misses, and decoy accounting behave as specified"
+        },
+        {
+          "number": 3,
+          "title": "Runner uses shared reader and analyzer contracts",
+          "expectedBehavior": "Runner uses the shared read_file_text(path) extraction path and build_analyzer() analyzer factory while processing a mini corpus into per-entity metrics.",
+          "proofType": "failing-test",
+          "exactCommand": "uv run pytest tests/test_benchmark.py::test_runner_uses_shared_reader_and_analyzer -v",
+          "expectedInitialFailure": "Runner module does not exist",
+          "expectedPassingEvidence": "1 passed - runner processes a mini corpus through the shared contracts"
+        },
+        {
+          "number": 4,
+          "title": "Benchmark CLI outputs table and JSON",
+          "expectedBehavior": "scanmenow benchmark exits 0 against a mini corpus, prints a summary table, and writes JSON when --output is supplied.",
+          "proofType": "failing-test",
+          "exactCommand": "uv run pytest tests/test_benchmark.py::test_benchmark_cli_outputs_table_and_json -v",
+          "expectedInitialFailure": "No benchmark command exists",
+          "expectedPassingEvidence": "1 passed - CLI prints table output and writes JSON report"
+        },
+        {
+          "number": 5,
+          "title": "Pytest benchmark gate behavior",
+          "expectedBehavior": "Benchmark tests pass; corpus-dependent gate skips when corpus path is absent and enforces thresholds when a configured corpus is present.",
+          "proofType": "failing-test",
+          "exactCommand": "uv run pytest tests/test_benchmark.py -v",
+          "expectedInitialFailure": "Benchmark tests or implementation missing",
+          "expectedPassingEvidence": "All benchmark tests pass, including skip and threshold-enforcement behavior"
+        }
+      ],
       "branch": null,
       "pr_url": null
     },
