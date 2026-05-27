@@ -1,0 +1,172 @@
+{
+  "_comment": "Per-label recall thresholds for the ScanMeNow benchmark runner. Owned by Task #4 (Group C). PHI labels derived from hipaa_coverage.json confidence notes (Task #3). PII labels set by Task C based on Presidio built-in recognizer reliability profiles. Add new labels here when Task G (PII) or Task #16 (international PII) ships — runner picks them up without code changes.",
+  "_last_updated": "2026-05-27",
+  "_schema": {
+    "min_recall": "Minimum recall fraction (0.0–1.0) required for a passing benchmark run. null = no threshold (best-effort label).",
+    "hard_threshold": "If true, falling below min_recall fails CI. If false, result is reported but does not block.",
+    "notes": "Human-readable rationale for the threshold value."
+  },
+  "thresholds": [
+    {
+      "entity_type": "EMAIL_ADDRESS",
+      "category": "PHI",
+      "min_recall": 0.90,
+      "hard_threshold": true,
+      "notes": "High-precision RFC 5322 pattern. Native Presidio recognizer. 90% floor reflects format diversity in corpus (display names, quoted local parts)."
+    },
+    {
+      "entity_type": "US_SSN",
+      "category": "PHI",
+      "min_recall": 0.90,
+      "hard_threshold": true,
+      "notes": "Well-defined NNN-NN-NNNN format. Native Presidio recognizer. High confidence."
+    },
+    {
+      "entity_type": "IP_ADDRESS",
+      "category": "PHI",
+      "min_recall": 0.90,
+      "hard_threshold": true,
+      "notes": "IPv4 dotted-decimal and IPv6 formats are unambiguous. Native Presidio recognizer."
+    },
+    {
+      "entity_type": "URL",
+      "category": "PHI",
+      "min_recall": 0.90,
+      "hard_threshold": true,
+      "notes": "http/https URLs and bare domain references. Native Presidio recognizer."
+    },
+    {
+      "entity_type": "PHONE_NUMBER",
+      "category": "PHI",
+      "min_recall": 0.80,
+      "hard_threshold": true,
+      "notes": "Covers phone and fax (same label). Native PhoneRecognizer. Lower than SSN/email due to international format diversity in corpus."
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PHI",
+      "min_recall": 0.80,
+      "hard_threshold": true,
+      "notes": "Multi-format dates (ISO, US, written month). Native DateRecognizer. Year-only dates are not HIPAA-covered and should not appear in golden_findings."
+    },
+    {
+      "entity_type": "PERSON",
+      "category": "PHI",
+      "min_recall": 0.75,
+      "hard_threshold": true,
+      "notes": "spaCy en_core_web_lg NER. May miss initials-only, single-token names without context, or non-Western name formats."
+    },
+    {
+      "entity_type": "VEHICLE_IDENTIFIER",
+      "category": "PHI",
+      "min_recall": 0.75,
+      "hard_threshold": true,
+      "notes": "VIN (17-char NHTSA format) is high-precision. License plate patterns vary by state — lower recall expected for non-standard plate formats. Custom recognizer (Task #3)."
+    },
+    {
+      "entity_type": "LOCATION",
+      "category": "PHI",
+      "min_recall": 0.70,
+      "hard_threshold": true,
+      "notes": "spaCy NER. May miss bare zip codes, PO boxes, or highly abbreviated addresses without surrounding context."
+    },
+    {
+      "entity_type": "MEDICAL_RECORD_NUMBER",
+      "category": "PHI",
+      "min_recall": 0.65,
+      "hard_threshold": true,
+      "notes": "Context-anchored custom recognizer (Task #3). Recall-biased tuning. 65% floor acknowledges high variability in MRN formats across healthcare systems."
+    },
+    {
+      "entity_type": "HEALTH_PLAN_BENEFICIARY",
+      "category": "PHI",
+      "min_recall": 0.65,
+      "hard_threshold": true,
+      "notes": "Context-anchored custom recognizer (Task #3). Alphanumeric ID patterns anchored by beneficiary/member keywords."
+    },
+    {
+      "entity_type": "ACCOUNT_NUMBER",
+      "category": "PHI",
+      "min_recall": 0.60,
+      "hard_threshold": true,
+      "notes": "Custom recognizer (Task #3). Broad recall-biased patterns; high false-positive tolerance. Supplements native US_BANK_NUMBER."
+    },
+    {
+      "entity_type": "CERTIFICATE_LICENSE_NUMBER",
+      "category": "PHI",
+      "min_recall": 0.60,
+      "hard_threshold": true,
+      "notes": "Custom recognizer (Task #3). Generic cert/license patterns; high format variability. Supplements native MEDICAL_LICENSE and US_DRIVER_LICENSE."
+    },
+    {
+      "entity_type": "DEVICE_IDENTIFIER",
+      "category": "PHI",
+      "min_recall": 0.60,
+      "hard_threshold": true,
+      "notes": "Custom recognizer (Task #3). Serial number formats vary enormously across device manufacturers. Context-keyword anchoring reduces but does not eliminate noise."
+    },
+    {
+      "entity_type": "BIOMETRIC_IDENTIFIER",
+      "category": "PHI",
+      "min_recall": null,
+      "hard_threshold": false,
+      "notes": "Best-effort keyword/phrase detection (Task #3). Detects text descriptions of biometric data, not actual biometric values. High false-negative rate expected. No threshold — results reported only."
+    },
+    {
+      "entity_type": "CREDIT_CARD",
+      "category": "PII",
+      "min_recall": 0.90,
+      "hard_threshold": true,
+      "notes": "Luhn-validated card numbers. Native Presidio recognizer. High-precision format; strong recall expected across Visa, Mastercard, Amex formats."
+    },
+    {
+      "entity_type": "US_BANK_NUMBER",
+      "category": "PII",
+      "min_recall": 0.80,
+      "hard_threshold": true,
+      "notes": "US routing + account number patterns. Native Presidio recognizer. Lower than credit card due to format variability (routing alone, account alone, combined)."
+    },
+    {
+      "entity_type": "US_PASSPORT",
+      "category": "PII",
+      "min_recall": 0.85,
+      "hard_threshold": true,
+      "notes": "9-digit alphanumeric US passport number. Native Presidio recognizer. Relatively distinctive format."
+    },
+    {
+      "entity_type": "US_DRIVER_LICENSE",
+      "category": "PII",
+      "min_recall": 0.70,
+      "hard_threshold": true,
+      "notes": "Native Presidio recognizer. State-issued license formats vary significantly (4–20 chars, alpha/numeric/mixed). Corpus must include multiple state formats; recall will vary by state."
+    },
+    {
+      "entity_type": "IBAN_CODE",
+      "category": "PII",
+      "min_recall": 0.85,
+      "hard_threshold": true,
+      "notes": "SWIFT/IBAN format is well-standardised (15–34 alphanumeric chars with 2-char country code prefix). Native Presidio recognizer."
+    },
+    {
+      "entity_type": "CRYPTO",
+      "category": "PII",
+      "min_recall": 0.75,
+      "hard_threshold": true,
+      "notes": "Cryptocurrency wallet addresses: Bitcoin (Base58, 26–35 chars), Ethereum (0x + 40 hex chars). Native Presidio recognizer. Recall varies by chain — Bitcoin and Ethereum expected highest."
+    },
+    {
+      "entity_type": "MEDICAL_LICENSE",
+      "category": "PII",
+      "min_recall": 0.75,
+      "hard_threshold": true,
+      "notes": "NPI numbers (10-digit) and state medical license formats. Native Presidio recognizer. Overlaps intentionally with CERTIFICATE_LICENSE_NUMBER for NPI values — both may fire; both are acceptable. NPI is the primary target."
+    },
+    {
+      "entity_type": "NRP",
+      "category": "PII",
+      "min_recall": null,
+      "hard_threshold": false,
+      "notes": "Nationality/religion/political group — keyword/phrase detection. Best-effort only; analogous to BIOMETRIC_IDENTIFIER. High false-negative rate for formal or indirect references. No threshold — results reported only."
+    }
+  ]
+}

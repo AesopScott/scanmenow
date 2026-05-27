@@ -49,11 +49,34 @@ Your corpus must exercise all **15 unique detectable entity labels** below. Thes
 
 ---
 
+### PII Identifiers (US-focused, activated by Task G)
+
+In addition to the 15 HIPAA PHI labels above, the corpus must cover the 8 US PII entity labels below. These are activated by Task G (PII scope expansion) using Presidio's built-in recognizers — no custom recognizer code is required, but the corpus must include realistic examples of each so the benchmark can validate detection.
+
+| PII Label | **Label (use exactly)** | Realistic Example Format | Notes |
+|---|---|---|---|
+| Credit card number | `CREDIT_CARD` | "4539 1488 0343 6467", "5500 0055 5555 4444" | Luhn-validated 16-digit card numbers; include Visa, Mastercard, Amex formats |
+| US bank account / routing number | `US_BANK_NUMBER` | "Routing: 021000021, Account: 12345678901" | 9-digit routing + account number |
+| US passport number | `US_PASSPORT` | "Passport: 482940581" | 9-digit alphanumeric US passport |
+| US driver's license number | `US_DRIVER_LICENSE` | "DL: A1234567", "License: D123-4567-8901" | State-issued; formats vary by state — include 2–3 state formats |
+| IBAN / international bank account | `IBAN_CODE` | "IBAN: GB29 NWBK 6016 1331 9268 19" | SWIFT/IBAN format; 15–34 alphanumeric chars |
+| Cryptocurrency wallet address | `CRYPTO` | "BTC: 1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf Rs", "ETH: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e" | Bitcoin (Base58), Ethereum (hex), or other common chain formats |
+| Medical license / NPI number | `MEDICAL_LICENSE` | "NPI: 1234567890", "Medical License: G12345" | 10-digit NPI or state medical license format |
+| Nationality / religion / political group | `NRP` | "He is a US citizen", "member of the Republican Party", "identifies as Catholic" | Text description of group membership — best-effort keyword detection |
+
+**Note on `NRP`:** Like `BIOMETRIC_IDENTIFIER`, this is keyword/phrase detection — high false-negative rate expected in formal clinical language. Include 2–3 natural-language mentions across the corpus. No hard accuracy threshold will be applied.
+
+**Note on `MEDICAL_LICENSE`:** This label overlaps with `CERTIFICATE_LICENSE_NUMBER` (HIPAA #11). Corpus documents may trigger both for the same span — that is acceptable and expected. Record only `MEDICAL_LICENSE` in `golden_findings.json` for NPI numbers and state medical licenses; `CERTIFICATE_LICENSE_NUMBER` coverage for those values is incidental.
+
+**Combined corpus requirement:** 15 PHI labels + 8 PII labels = **23 distinct entity labels** total. Every label must appear in ≥ 3 findings across ≥ 2 documents (except `BIOMETRIC_IDENTIFIER` and `NRP` which require only ≥ 2 mentions across the corpus with no threshold).
+
+---
+
 ## Document Requirements
 
 ### Quantity
 
-Produce a minimum of **15 documents** — enough to cover all required formats. Suggested distribution:
+Produce a minimum of **15 documents** — enough to cover all required formats and achieve ≥ 3 instances of all 23 entity labels. The PII labels (credit cards, passports, IBANs, crypto addresses) fit naturally into financial, HR, and mixed-content documents. Suggested distribution:
 
 | Document Type | Suggested Format | Count |
 |---|---|---|
@@ -326,25 +349,40 @@ The benchmark will compare the engine's output against your golden findings and 
 - **Precision** (per type): fraction of engine findings that were in the golden set (or near-miss decoys)
 - **False positive rate** (per type): decoys the engine incorrectly flagged
 
-The following thresholds define a passing build. Do not adjust your corpus to hit these thresholds — write realistic documents and let the numbers fall where they do.
+The authoritative threshold table is maintained in `docs/benchmark_thresholds.json` in the ScanMeNow repository. The values below are a human-readable summary; the JSON file is what the benchmark runner enforces. Do not adjust your corpus to hit these thresholds — write realistic documents and let the numbers fall where they do.
 
-| Identifier Type | Minimum Recall | Notes |
+**PHI labels (HIPAA Safe Harbor):**
+
+| Label | Minimum Recall | Notes |
 |---|---|---|
 | `EMAIL_ADDRESS` | 90% | High-precision format |
 | `US_SSN` | 90% | High-precision format |
-| `PERSON` | 75% | NER-based; may miss initials, nicknames |
-| `LOCATION` | 70% | NER-based; may miss bare zip codes |
-| `DATE_TIME` | 80% | Multi-format; year-only not counted |
-| `PHONE_NUMBER` | 80% | Covers fax (same type) |
 | `IP_ADDRESS` | 90% | High-precision format |
 | `URL` | 90% | High-precision format |
+| `PHONE_NUMBER` | 80% | Covers fax (same label) |
+| `DATE_TIME` | 80% | Multi-format; year-only not counted |
+| `PERSON` | 75% | NER-based; may miss initials, nicknames |
+| `VEHICLE_IDENTIFIER` | 75% | VIN precise; plates variable |
+| `LOCATION` | 70% | NER-based; may miss bare zip codes |
 | `MEDICAL_RECORD_NUMBER` | 65% | Context-anchored; recall-biased |
 | `HEALTH_PLAN_BENEFICIARY` | 65% | Context-anchored; recall-biased |
-| `ACCOUNT_NUMBER` | 60% | High false-positive tolerance |
-| `CERTIFICATE_LICENSE_NUMBER` | 60% | High false-positive tolerance |
-| `VEHICLE_IDENTIFIER` | 75% | VIN format well-defined; plates variable |
+| `ACCOUNT_NUMBER` | 60% | Broad recall-biased patterns |
+| `CERTIFICATE_LICENSE_NUMBER` | 60% | High format variability |
 | `DEVICE_IDENTIFIER` | 60% | High format variability |
 | `BIOMETRIC_IDENTIFIER` | no threshold | Best-effort keyword detection only |
+
+**PII labels (US-focused, Task G):**
+
+| Label | Minimum Recall | Notes |
+|---|---|---|
+| `CREDIT_CARD` | 90% | Luhn-validated; high precision |
+| `US_PASSPORT` | 85% | Distinctive 9-digit format |
+| `IBAN_CODE` | 85% | Well-standardised SWIFT/IBAN format |
+| `US_BANK_NUMBER` | 80% | Routing + account; format variability |
+| `CRYPTO` | 75% | Bitcoin/Ethereum highest; other chains variable |
+| `MEDICAL_LICENSE` | 75% | NPI (10-digit) primary target |
+| `US_DRIVER_LICENSE` | 70% | State formats vary significantly |
+| `NRP` | no threshold | Best-effort phrase detection only |
 
 ---
 
