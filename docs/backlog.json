@@ -29,7 +29,7 @@
       "description": "Local filesystem walker with path resolution, skip patterns, symlink policy, max-depth limits, and end-to-end CLI integration. File format scope: TXT, CSV, JSON, PDF (pdfminer.six), DOCX/XLSX/PPTX (python-docx/openpyxl/python-pptx), legacy DOC (LibreOffice headless subprocess), PNG/JPG/JPEG/GIF (pytesseract + Tesseract OCR). System dependencies: Tesseract OCR, LibreOffice. Platform scope: Windows and Linux.",
       "category": "feature",
       "priority": 97,
-      "status": "backlog",
+      "status": "planned",
       "impact": "standard",
       "phase": null,
       "phase_task": null,
@@ -38,8 +38,79 @@
       "completed_at": null,
       "dependencies": [],
       "notes": "Hardening concern carried from Task #3 dual review (Claude Sonnet 4.6 + Codex GPT-5, 2026-05-26): when the filesystem walker pipes findings through the detection layer, expand the recognizer collision tests from 'at least one entity fires' into expected entity/span precedence behaviour. A numeric token can match MEDICAL_RECORD_NUMBER, ACCOUNT_NUMBER, and DEVICE_IDENTIFIER simultaneously; if downstream redaction or reporting logic needs deterministic entity precedence over overlapping PHI spans, that dedup/priority contract must be defined and tested here rather than left implicit. OCR SCOPE ADDITION (2026-05-27): Task D now includes OCR capability for image-format files (PNG, JPG, JPEG, GIF) via Tesseract (pytesseract), and legacy .doc files via LibreOffice headless subprocess (cross-platform, no extra pip package). LibreOffice is a system dependency like Tesseract; absence triggers WARNING + skip rather than crash. Linux testing will be performed on WSL. INSTALLER NOTE: Task #12 (Dependency Bootstrapper) owns auto-detection and installation of Tesseract and LibreOffice for end users.",
-      "plan": null,
-      "proofUnits": [],
+      "objective": {
+        "statement": "Deliver a working filesystem walker that scans all supported file formats (TXT, CSV, JSON, PDF, DOCX, XLSX, PPTX, DOC, PNG, JPG, JPEG, GIF) for PHI/PII, stores structured findings in SQLite with source_line provenance, and exposes `scanmenow scan <path>` as a working CLI command on Windows and Linux.",
+        "successCriteria": [
+          "All 10 file format readers extract non-empty text from fixture files and pass unit tests",
+          "FileSystemWalker correctly applies skip patterns, max-depth, and symlink skip policy as verified by unit tests",
+          "Span collision test asserts ≥2 distinct entity types on overlapping spans; get_overlapping_findings() returns all",
+          "run_scan() persists findings in SQLite with source_line populated for text-based formats",
+          "scanmenow scan <path> CLI command exits 0, prints summary, and persists findings for a multi-format fixture directory"
+        ],
+        "nonGoals": [
+          "Dependency bootstrapper or auto-install of Tesseract/LibreOffice for end users (Task #12)",
+          "Windows/Linux/VMware installers (Tasks #13-15)",
+          "Legacy .xls, .xlsb, .ppt binary formats",
+          "Streaming or chunked scanning for files >100MB",
+          "Cloud storage scanning (Task #8)",
+          "Reduction or redaction pipeline",
+          "Electron UI integration"
+        ],
+        "proofMap": [
+          {"criterion": "All 10 file format readers extract non-empty text from fixture files and pass unit tests", "proofUnit": 2},
+          {"criterion": "FileSystemWalker correctly applies skip patterns, max-depth, and symlink skip policy as verified by unit tests", "proofUnit": 1},
+          {"criterion": "Span collision test asserts ≥2 distinct entity types on overlapping spans; get_overlapping_findings() returns all", "proofUnit": 3},
+          {"criterion": "run_scan() persists findings in SQLite with source_line populated for text-based formats", "proofUnit": 4},
+          {"criterion": "scanmenow scan <path> CLI command exits 0, prints summary, and persists findings for a multi-format fixture directory", "proofUnit": 5}
+        ],
+        "stopConditions": [
+          "Task #3 (HIPAA recognizers) is not yet merged to main — Task #5 branch must be based on task/3 branch or wait for merge before build can start",
+          "LibreOffice not installed on build machine — .doc tests must be mocked or skipped; document clearly in test"
+        ]
+      },
+      "proofUnits": [
+        {
+          "number": 1,
+          "title": "Walker unit tests pass",
+          "expectedBehavior": "FileSystemWalker correctly applies skip patterns, max-depth, symlink skip, and hidden file policy across all configured test scenarios",
+          "exactCommand": "uv run pytest tests/test_walker.py -v",
+          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.walker' or test file does not exist",
+          "expectedPassingEvidence": "All walker tests pass — at minimum: skip pattern, max depth, symlink skip, hidden file, path resolution, unsupported extension tests green"
+        },
+        {
+          "number": 2,
+          "title": "Reader unit tests pass (all formats)",
+          "expectedBehavior": "read_file_text() returns non-empty text for each supported format fixture; graceful skip (empty string + WARNING) when Tesseract or LibreOffice absent",
+          "exactCommand": "uv run pytest tests/test_reader.py -v",
+          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.walker.reader' or test file does not exist",
+          "expectedPassingEvidence": "All reader tests pass including graceful-skip mock tests for missing Tesseract/LibreOffice"
+        },
+        {
+          "number": 3,
+          "title": "Span collision contract tests",
+          "expectedBehavior": "A numeric token prefixed with MRN, account, and serial context keywords produces ≥2 distinct entity_type findings with overlapping spans; get_overlapping_findings() returns all of them",
+          "exactCommand": "uv run pytest tests/test_span_collision.py -v",
+          "expectedInitialFailure": "test file does not exist",
+          "expectedPassingEvidence": "test_overlapping_entities_all_saved and test_get_overlapping_findings_returns_all pass; hardening contract comment present in test source"
+        },
+        {
+          "number": 4,
+          "title": "Integration scan test — fixture directory to SQLite findings",
+          "expectedBehavior": "run_scan() on the tests/fixtures/ directory produces a ScanSummary with files_scanned >= 3, persists findings in SQLite, source_line is populated for text-based format findings, source_file is set",
+          "exactCommand": "uv run pytest tests/test_scanner.py -v",
+          "expectedInitialFailure": "ModuleNotFoundError: No module named 'scanmenow.scanner' or test file does not exist",
+          "expectedPassingEvidence": "All scanner integration tests pass; findings retrievable from SQLite after scan"
+        },
+        {
+          "number": 5,
+          "title": "CLI scan command end-to-end",
+          "expectedBehavior": "scanmenow scan ./tests/fixtures/ exits 0, prints a summary table with files scanned and findings count, and a ScanJob record exists in SQLite after the run",
+          "exactCommand": "uv run scanmenow scan ./tests/fixtures/ --depth 2",
+          "expectedInitialFailure": "Error: No such command 'scan' (Typer exits with code 2)",
+          "expectedPassingEvidence": "Exit 0, summary output visible in terminal, job_id printed, findings retrievable from DB"
+        }
+      ],
+      "plan": "scanmenow_Build/Tasks/Task-5-group-d-filesystem-walker-integration.md",
       "branch": null,
       "pr_url": null
     },
