@@ -76,6 +76,18 @@
       "proofUnits": [],
       "branch": null,
       "pr_url": null
+    },
+    {
+      "number": 9,
+      "title": "Add PII to scope and capability",
+      "description": "It doesn't look like across the project that PII scanning was in scope, and only PHI scanning is listed. We need you to add pii to the project and build scan capability for it.",
+      "category": "feature",
+      "priority": 50,
+      "impact": "standard",
+      "status": "backlog",
+      "created_at": "2026-05-27",
+      "completed_at": null,
+      "dependencies": []
     }
   ]
 }
