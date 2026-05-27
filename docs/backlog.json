@@ -195,6 +195,23 @@
       "proofUnits": [],
       "branch": null,
       "pr_url": null
+    },
+    {
+      "number": 16,
+      "title": "International PII Scope Expansion",
+      "description": "Extend PII detection coverage beyond US-focused entity types to include international and GDPR-scoped identifiers. Activate Presidio's country-specific built-in recognizers: UK NHS number, AU TFN/Medicare/ABN/ACN, SG NRIC/FIN, EU fiscal codes (IT, ES, FI, PL), and any others supported by Presidio at implementation time. Produce a companion pii_international_coverage.json registry documenting each identifier, jurisdiction, recognizer source, and confidence notes. Depends on Task #9 (US PII foundation) being production.",
+      "category": "feature",
+      "priority": 40,
+      "impact": "standard",
+      "status": "backlog",
+      "created_at": "2026-05-27",
+      "completedAt": null,
+      "dependencies": [9],
+      "notes": "Deferred from Task #9 scope decision (2026-05-27): Scott confirmed US-only PII scope for Task #9. International expansion added as a separate backlog item for future consideration. No custom recognizers expected — all international types are Presidio built-ins requiring only registration.",
+      "plan": null,
+      "proofUnits": [],
+      "branch": null,
+      "pr_url": null
     }
   ]
 }
