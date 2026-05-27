@@ -545,24 +545,3 @@ Nationality, Religion, Political group — detects text mentioning someone's nat
 **New identifiers Task #5 will introduce:** none — entity type registry unchanged by Task #5
 
 **Status:** ✓ Build-start audit complete (Task #5)
-
----
-
-## Audit Trail — Task #8 Pre-build Baseline
-
-**Pre-build audit — 2026-05-27T18:00:00Z (by /cross-boundary-audit — Task #8 baseline)**
-
-**Branch:** main (pre-Task #8 code; Task #5 build-started in parallel worktree)
-
-**Boundaries checked:** Presidio entity type strings — all `entity_type` references in `src/` and `tests/`
-
-**Evidence recorded:**
-- All 7 HIPAA custom entity types remain in registry and in code (verified: `mrn.py`, `beneficiary.py`, `account.py`, `license.py`, `vehicle.py`, `device.py`, `biometric.py`) ✓
-- All 6 Presidio native entity types remain in registry and tested ✓
-- 8 PII entity types pre-registered for Task #9 ⚠ — `pii/us_pii.py` does not exist yet; expected
-- `findings.entity_type` column (TEXT) stores all strings verbatim — no schema change needed for Task #8 or Task #9 ✓
-- Task #8 introduces no new entity types — retention operates on all existing types regardless of label
-- 0 entity type strings found in code that are not in the registry
-- 0 shape mismatches
-
-**Status:** ✓ Pre-build audit complete (Task #8 baseline) — no changes to entity-types registry

@@ -240,30 +240,3 @@ Standard GCP authentication env var pointing to a service account JSON key file.
 **Hard mandate:** `SCANMENOW_LOG_LEVEL` must have a code consumer in `cli.py` before this task's PR is opened. The post-build audit will fail if it remains unwired.
 
 **Status:** ✓ Build-start audit complete (Task #5)
-
----
-
-**Pre-build audit — 2026-05-27T18:00:00Z (by /cross-boundary-audit — Task #8 baseline)**
-
-**Branch:** main (pre-Task #8 code; Task #5 build-started in parallel worktree)
-
-**Boundaries checked:** All 8 environment variables — full code scan of `src/` and `tests/`
-
-**Evidence recorded:**
-- `SCANMENOW_DB_PATH` ✓ — `storage/db.py:12` — unchanged, fully implemented
-- `SCANMENOW_LOG_LEVEL` ⚠ **HARD MANDATE** — 5th consecutive carry; no code consumer exists anywhere in `src/`; marked mandatory for Task #5 `cli.py` startup; Task #5 is `build-started` — this must be wired before Task #5 PR opens. Post-build audit for Task #5 will fail if still absent.
-- `TESSERACT_CMD` ⚠ — planned Task #5; `walker/reader.py` does not exist yet; expected
-- `LIBREOFFICE_CMD` ⚠ — planned Task #5; `walker/reader.py` does not exist yet; expected
-- `SCANMENOW_CORPUS_PATH` ⚠ — planned Task #4; `benchmark/runner.py` does not exist yet; expected
-- `SCANMENOW_BACKEND` ⚠ — planned Task #8; `storage/base.py` does not exist yet; expected
-- `SCANMENOW_FIRESTORE_PROJECT` ⚠ — planned Task #8; `cloud/client.py` does not exist yet; expected
-- `GOOGLE_APPLICATION_CREDENTIALS` ⚠ — planned Task #8 (GCP standard var); `cloud/client.py` does not exist yet; expected
-- 0 new variables found in code that are not in the registry
-- 0 shape mismatches
-
-**New identifiers Task #8 will introduce (to verify at post-build audit):**
-- `SCANMENOW_BACKEND` consumed at `src/scanmenow/storage/base.py` — `get_repository()` factory reads value, routes to `SqliteRepository` or `FirestoreRepository`
-- `SCANMENOW_FIRESTORE_PROJECT` consumed at `src/scanmenow/cloud/client.py` — `get_firestore_client()` passes to Firestore client constructor
-- `GOOGLE_APPLICATION_CREDENTIALS` consumed implicitly by `google-cloud-firestore` SDK inside `get_firestore_client()` — not read directly by ScanMeNow code
-
-**Status:** ✓ Pre-build audit complete (Task #8 baseline)

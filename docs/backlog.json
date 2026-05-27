@@ -36,26 +36,11 @@
           "Redaction, reduction, migration, retention, or UI work"
         ],
         "proofMap": [
-          {
-            "criterion": "Threshold loader reads docs/benchmark_thresholds.json and supports hard-threshold and report-only labels",
-            "proofUnit": 1
-          },
-          {
-            "criterion": "Span matcher supports exact text-native matching, +/-5 OCR tolerance, and decoy-aware false-positive accounting",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "Runner imports shared read_file_text(path) and build_analyzer() contracts instead of duplicating extraction or recognizer registration",
-            "proofUnit": 3
-          },
-          {
-            "criterion": "scanmenow benchmark --corpus <path> [--output report.json] prints a terminal report and optionally writes JSON",
-            "proofUnit": 4
-          },
-          {
-            "criterion": "tests/test_benchmark.py skips gracefully when corpus is absent and enforces configured hard thresholds when corpus is present",
-            "proofUnit": 5
-          }
+          {"criterion": "Threshold loader reads docs/benchmark_thresholds.json and supports hard-threshold and report-only labels", "proofUnit": 1},
+          {"criterion": "Span matcher supports exact text-native matching, +/-5 OCR tolerance, and decoy-aware false-positive accounting", "proofUnit": 2},
+          {"criterion": "Runner imports shared read_file_text(path) and build_analyzer() contracts instead of duplicating extraction or recognizer registration", "proofUnit": 3},
+          {"criterion": "scanmenow benchmark --corpus <path> [--output report.json] prints a terminal report and optionally writes JSON", "proofUnit": 4},
+          {"criterion": "tests/test_benchmark.py skips gracefully when corpus is absent and enforces configured hard thresholds when corpus is present", "proofUnit": 5}
         ],
         "stopConditions": [
           "docs/benchmark_thresholds.json is missing or invalid",
@@ -129,7 +114,7 @@
       "created_at": "2026-05-23",
       "completed_at": null,
       "dependencies": [],
-      "branch": null,
+      "branch": "task/5-group-d-filesystem-walker-integration",
       "notes": "Hardening concern carried from Task #3 dual review (Claude Sonnet 4.6 + Codex GPT-5, 2026-05-26): when the filesystem walker pipes findings through the detection layer, expand the recognizer collision tests from 'at least one entity fires' into expected entity/span precedence behaviour. A numeric token can match MEDICAL_RECORD_NUMBER, ACCOUNT_NUMBER, and DEVICE_IDENTIFIER simultaneously; if downstream redaction or reporting logic needs deterministic entity precedence over overlapping PHI spans, that dedup/priority contract must be defined and tested here rather than left implicit. OCR SCOPE ADDITION (2026-05-27): Task D now includes OCR capability for image-format files (PNG, JPG, JPEG, GIF) via Tesseract (pytesseract), and legacy .doc files via LibreOffice headless subprocess (cross-platform, no extra pip package). LibreOffice is a system dependency like Tesseract; absence triggers WARNING + skip rather than crash. Linux testing will be performed on WSL. INSTALLER NOTE: Task #12 (Dependency Bootstrapper) owns auto-detection and installation of Tesseract and LibreOffice for end users. --- ORCHESTRATOR CORRECTIONS (2026-05-27, cross-session sync from Task C/H planning): (1) PDF LIBRARY CORRECTION: use pdfplumber (not pdfminer.six) for text-layer PDF extraction. Task H corpus will generate .extracted.txt companions for text PDFs using pdfplumber per docs/GROUP-C-CORPUS-SPEC.md — if Task D uses pdfminer.six instead, extracted text will differ and all text-layer PDF corpus offsets will drift in the benchmark. Update reader.py to use pdfplumber, page-by-page extraction joined with newline. (2) IMAGE FORMAT GAP: add .tiff/.tif and .bmp to SUPPORTED_EXTENSIONS and reader format handlers. The Task H corpus spec (docs/GROUP-C-CORPUS-SPEC.md, correction #4 in Task H backlog notes commit 5e680077) requires doc_013_lab_result_scan.tiff and doc_014_consent_form_scan.bmp — these files will be in corpus/ and must be scannable. Both use the same pytesseract extraction path as PNG/JPG. Without them, two corpus documents produce zero findings and Task C benchmark shows 100% false-negative rate for all entity types in those files. --- ARCHITECTURAL DEPENDENCY CONTRACT (2026-05-27): Task D (#5) OWNS Contract 2. Task D must expose read_file_text(path: Path) -> str as a stable public function at src/scanmenow/walker/reader.py. Task C (benchmark runner) imports this function directly — it does not duplicate format-handling logic. Interface contract: returns extracted plain text (str); returns empty string + logs WARNING on graceful skip (missing Tesseract, missing LibreOffice); raises on unrecoverable errors. This is the hard coupling that keeps corpus golden-finding offsets consistent with production scanning offsets — any drift between Task D's extraction and Task C's extraction invalidates benchmark accuracy numbers in both directions. The extraction libraries and commands specified in docs/GROUP-C-CORPUS-SPEC.md are authoritative for this function.",
       "objective": {
         "statement": "Deliver a working filesystem walker that scans all supported file formats (TXT, CSV, JSON, PDF, DOCX, XLSX, PPTX, DOC, PNG, JPG, JPEG, TIFF, BMP, GIF) for PHI/PII, stores structured findings in SQLite with source_line provenance, and exposes `scanmenow scan <path>` as a working CLI command on Windows and Linux.",
@@ -150,26 +135,11 @@
           "Electron UI integration"
         ],
         "proofMap": [
-          {
-            "criterion": "All 10 file format readers extract non-empty text from fixture files and pass unit tests",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "FileSystemWalker correctly applies skip patterns, max-depth, and symlink skip policy as verified by unit tests",
-            "proofUnit": 1
-          },
-          {
-            "criterion": "Span collision test asserts ≥2 distinct entity types on overlapping spans; get_overlapping_findings() returns all",
-            "proofUnit": 3
-          },
-          {
-            "criterion": "run_scan() persists findings in SQLite with source_line populated for text-based formats",
-            "proofUnit": 4
-          },
-          {
-            "criterion": "scanmenow scan <path> CLI command exits 0, prints summary, and persists findings for a multi-format fixture directory",
-            "proofUnit": 5
-          }
+          {"criterion": "All 10 file format readers extract non-empty text from fixture files and pass unit tests", "proofUnit": 2},
+          {"criterion": "FileSystemWalker correctly applies skip patterns, max-depth, and symlink skip policy as verified by unit tests", "proofUnit": 1},
+          {"criterion": "Span collision test asserts ≥2 distinct entity types on overlapping spans; get_overlapping_findings() returns all", "proofUnit": 3},
+          {"criterion": "run_scan() persists findings in SQLite with source_line populated for text-based formats", "proofUnit": 4},
+          {"criterion": "scanmenow scan <path> CLI command exits 0, prints summary, and persists findings for a multi-format fixture directory", "proofUnit": 5}
         ],
         "stopConditions": [
           "Task #3 (HIPAA recognizers) is not yet merged to main — Task #5 branch must be based on task/3 branch or wait for merge before build can start",
@@ -219,6 +189,7 @@
         }
       ],
       "plan": "scanmenow_Build/Tasks/Task-5-group-d-filesystem-walker-integration.md",
+      "branch": "task/5-group-d-filesystem-walker-integration",
       "pr_url": null
     },
     {
@@ -246,16 +217,14 @@
       "description": "Firestore connection layer with environment flag for local dev, retention policy evaluation, and cloud integration (4 subtasks)",
       "category": "feature",
       "priority": 96,
-      "status": "cba-complete",
+      "status": "planned",
       "impact": "standard",
       "phase": null,
       "phase_task": null,
       "parent": 1,
       "created_at": "2026-05-23",
       "completed_at": null,
-      "dependencies": [
-        5
-      ],
+      "dependencies": [5],
       "notes": "STORAGE LAYER DEPENDENCY (orchestrator, 2026-05-27): Task #8 refactors storage into a Repository(Protocol) + SqliteRepository class (storage/base.py). Task #5 extends the same storage module: adds findings.source_line via ALTER TABLE and adds get_overlapping_findings() to repository. If Task #8 builds before Task #5, SqliteRepository will be created without wrapping get_overlapping_findings(), leaving the Repository protocol incomplete. Task #5 must land first (priority 97 > 96 already enforces order), OR Task #8 must include get_overlapping_findings() in the Repository protocol and SqliteRepository on the assumption that Task #5 adds it. Dependency [5] added to enforce correct build order. --- Also note: Task #8 adds findings.created_at column via ALTER TABLE; Task #5 adds findings.source_line via ALTER TABLE. Both are idempotent. The order does not matter for the migrations themselves, only for the Repository class wrapper.",
       "objective": {
         "statement": "Deliver a Firestore-backed cloud storage layer with a SCANMENOW_BACKEND env flag (sqlite|firestore), an age-based retention policy evaluator, and a `scanmenow retain` CLI subcommand — all independently testable without a live GCP connection.",
@@ -276,26 +245,11 @@
           "Multi-region Firestore setup"
         ],
         "proofMap": [
-          {
-            "criterion": "Repository protocol extracted; both repos satisfy it; get_repository() routes on SCANMENOW_BACKEND",
-            "proofUnit": 1
-          },
-          {
-            "criterion": "FirestoreRepository lazily imports google-cloud-firestore so SQLite mode never requires GCP credentials",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "evaluate_retention() dry-run returns RetentionReport without deleting any findings",
-            "proofUnit": 3
-          },
-          {
-            "criterion": "evaluate_retention() live mode deletes only findings older than max_age_days; empty created_at kept",
-            "proofUnit": 4
-          },
-          {
-            "criterion": "scanmenow retain --max-age-days 90 --dry-run exits 0 and prints a retention report",
-            "proofUnit": 5
-          }
+          {"criterion": "Repository protocol extracted; both repos satisfy it; get_repository() routes on SCANMENOW_BACKEND", "proofUnit": 1},
+          {"criterion": "FirestoreRepository lazily imports google-cloud-firestore so SQLite mode never requires GCP credentials", "proofUnit": 2},
+          {"criterion": "evaluate_retention() dry-run returns RetentionReport without deleting any findings", "proofUnit": 3},
+          {"criterion": "evaluate_retention() live mode deletes only findings older than max_age_days; empty created_at kept", "proofUnit": 4},
+          {"criterion": "scanmenow retain --max-age-days 90 --dry-run exits 0 and prints a retention report", "proofUnit": 5}
         ],
         "stopConditions": [
           "If google-cloud-firestore package cannot be installed as an optional dep without breaking the base install, stop and resolve the packaging approach before proceeding"
@@ -354,7 +308,7 @@
       "category": "feature",
       "priority": 50,
       "impact": "standard",
-      "status": "cba-complete",
+      "status": "planned",
       "created_at": "2026-05-27",
       "completed_at": null,
       "dependencies": [],
@@ -375,26 +329,11 @@
           "End-to-end file scanning validation — Task #4"
         ],
         "proofMap": [
-          {
-            "criterion": "docs/pii_coverage.json documents all 8 US PII entity types",
-            "proofUnit": 1
-          },
-          {
-            "criterion": "ALL_PII_RECOGNIZERS exported and merged into ALL_RECOGNIZERS",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "build_analyzer() registers all 8 PII entity type strings",
-            "proofUnit": 2
-          },
-          {
-            "criterion": "tests/test_pii_recognizers.py passes: 8 positive, 8 negative, 1 integration",
-            "proofUnit": 4
-          },
-          {
-            "criterion": "docs/registries/entity-types.md extended with 8 new entries",
-            "proofUnit": 4
-          }
+          {"criterion": "docs/pii_coverage.json documents all 8 US PII entity types", "proofUnit": 1},
+          {"criterion": "ALL_PII_RECOGNIZERS exported and merged into ALL_RECOGNIZERS", "proofUnit": 2},
+          {"criterion": "build_analyzer() registers all 8 PII entity type strings", "proofUnit": 2},
+          {"criterion": "tests/test_pii_recognizers.py passes: 8 positive, 8 negative, 1 integration", "proofUnit": 4},
+          {"criterion": "docs/registries/entity-types.md extended with 8 new entries", "proofUnit": 4}
         ],
         "stopConditions": [
           "If any of the 8 target Presidio recognizer classes are absent from the installed Presidio version, stop and resolve the version mismatch before proceeding — do not write us_pii.py with unverified class names"
@@ -453,7 +392,7 @@
       "category": "feature",
       "priority": 98,
       "impact": "standard",
-      "status": "build-started",
+      "status": "backlog",
       "created_at": "2026-05-27",
       "completed_at": null,
       "dependencies": [
@@ -492,9 +431,7 @@
       "status": "backlog",
       "created_at": "2026-05-27",
       "completed_at": null,
-      "dependencies": [
-        5
-      ],
+      "dependencies": [5],
       "notes": "System dependencies introduced by Task #5: Tesseract OCR (image scanning), LibreOffice headless (legacy .doc extraction). Both are system-level binaries, not pip packages. Windows install paths: Tesseract at C:\\Program Files\\Tesseract-OCR\\tesseract.exe (winget: UB-Mannheim.TesseractOCR), LibreOffice at C:\\Program Files\\LibreOffice\\program\\soffice.exe. Linux install: apt-get install tesseract-ocr libreoffice (or equivalent). WSL-aware: distinguish WSL from native Linux for path resolution.",
       "plan": null,
       "proofUnits": [],
@@ -511,9 +448,7 @@
       "status": "backlog",
       "created_at": "2026-05-27",
       "completed_at": null,
-      "dependencies": [
-        12
-      ],
+      "dependencies": [12],
       "notes": "Electron Builder target: nsis (NSIS installer) or msi. Python embedding strategy TBD: PyInstaller bundled alongside Electron, or subprocess bridge to system Python. Code signing required for SmartScreen clearance. Consider auto-update via electron-updater.",
       "plan": null,
       "proofUnits": [],
@@ -530,9 +465,7 @@
       "status": "backlog",
       "created_at": "2026-05-27",
       "completed_at": null,
-      "dependencies": [
-        12
-      ],
+      "dependencies": [12],
       "notes": "Electron Builder targets: deb, rpm, AppImage. WSL testing confirmed by Scott (2026-05-27). System package manager detection: prefer apt, fallback to dnf/yum/zypper. Bootstrapper must handle headless Linux installs (no GUI sudo prompt). Desktop entry (.desktop file) for GUI environments.",
       "plan": null,
       "proofUnits": [],
@@ -549,9 +482,7 @@
       "status": "backlog",
       "created_at": "2026-05-27",
       "completedAt": null,
-      "dependencies": [
-        14
-      ],
+      "dependencies": [14],
       "notes": "Base image: Ubuntu 24.04 LTS (minimal server). VM spec: 4 vCPU, 8GB RAM, 60GB disk (minimum). VMware Tools pre-installed. ScanMeNow installed via Linux DEB package (Task #14 artifact). Consider also producing a VirtualBox OVA variant. Air-gap support: all dependency installers pre-bundled, no internet required post-deploy.",
       "plan": null,
       "proofUnits": [],
@@ -568,9 +499,7 @@
       "status": "backlog",
       "created_at": "2026-05-27",
       "completedAt": null,
-      "dependencies": [
-        9
-      ],
+      "dependencies": [9],
       "notes": "Deferred from Task #9 scope decision (2026-05-27): Scott confirmed US-only PII scope for Task #9. International expansion added as a separate backlog item for future consideration. No custom recognizers expected — all international types are Presidio built-ins requiring only registration.",
       "plan": null,
       "proofUnits": [],
