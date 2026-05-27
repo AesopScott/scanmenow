@@ -147,7 +147,8 @@
       "parent": 1,
       "created_at": "2026-05-23",
       "completed_at": null,
-      "dependencies": [],
+      "dependencies": [5],
+      "notes": "STORAGE LAYER DEPENDENCY (orchestrator, 2026-05-27): Task #8 refactors storage into a Repository(Protocol) + SqliteRepository class (storage/base.py). Task #5 extends the same storage module: adds findings.source_line via ALTER TABLE and adds get_overlapping_findings() to repository. If Task #8 builds before Task #5, SqliteRepository will be created without wrapping get_overlapping_findings(), leaving the Repository protocol incomplete. Task #5 must land first (priority 97 > 96 already enforces order), OR Task #8 must include get_overlapping_findings() in the Repository protocol and SqliteRepository on the assumption that Task #5 adds it. Dependency [5] added to enforce correct build order. --- Also note: Task #8 adds findings.created_at column via ALTER TABLE; Task #5 adds findings.source_line via ALTER TABLE. Both are idempotent. The order does not matter for the migrations themselves, only for the Repository class wrapper.",
       "objective": {
         "statement": "Deliver a Firestore-backed cloud storage layer with a SCANMENOW_BACKEND env flag (sqlite|firestore), an age-based retention policy evaluator, and a `scanmenow retain` CLI subcommand — all independently testable without a live GCP connection.",
         "successCriteria": [
