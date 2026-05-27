@@ -246,7 +246,7 @@
       "description": "Firestore connection layer with environment flag for local dev, retention policy evaluation, and cloud integration (4 subtasks)",
       "category": "feature",
       "priority": 96,
-      "status": "build-started",
+      "status": "cba-complete",
       "impact": "standard",
       "phase": null,
       "phase_task": null,
